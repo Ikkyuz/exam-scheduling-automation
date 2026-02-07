@@ -1,0 +1,3 @@
+api-nvc-exam.com {
+    reverse_proxy backend_server:3000
+}

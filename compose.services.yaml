@@ -1,0 +1,41 @@
+services:
+  postgres:
+    container_name: database
+    image: postgres
+    restart: unless-stopped
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=exam-scheduling
+      - POSTGRES_PASSWORD=mysecretpassword
+      - POSTGRES_USER=postgres
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD", "pg_isready", -U, postgres]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  n8n:
+    container_name: n8n
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - GENERIC_TIMEZONE=Asia/Bangkok
+      - TZ=Asia/Bangkok
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_RUNNERS_ENABLED=true
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+
+volumes:
+  db_data:
+  n8n_data:
+
+networks:
+  default:
+    driver: bridge

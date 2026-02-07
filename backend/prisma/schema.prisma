@@ -1,0 +1,253 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+    provider = "prisma-client"
+    output   = "../src/providers/database/generated"
+    // binaryTargets = ["native", "windows", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum Role {
+    USER
+    ADMIN
+}
+
+model Department {
+    id   Int    @id @default(autoincrement())
+    name String @unique
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    classes  Class[]
+    teachers Teacher[]
+}
+
+model Course {
+    id       Int    @id @default(autoincrement())
+    code     String @unique
+    name     String
+    duration Float
+    examType String @default("ในตาราง")
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    enrollments   Enrollment[]
+    courseGroups  CourseGroup[]
+
+    @@index([code, name])
+}
+
+model Class {
+    id            Int    @id @default(autoincrement())
+    name          String
+    level         String @default("ปวช") // Still a string, assuming "ปวช" is a specific string value
+    classYear     String
+    department_id Int
+    amount        Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    department    Department     @relation(fields: [department_id], references: [id])
+    enrollments   Enrollment[]
+
+    @@index([department_id])
+}
+
+model Enrollment {
+    id        Int @id @default(autoincrement())
+    class_id  Int
+    course_id Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    class  Class  @relation(fields: [class_id], references: [id])
+    course Course @relation(fields: [course_id], references: [id])
+
+    @@index([class_id, course_id])
+}
+
+model CourseGroup {
+    id        Int @id @default(autoincrement())
+    course_id Int
+    groupNum  Int @default(0)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    course Course @relation(fields: [course_id], references: [id])
+
+    @@index([course_id])
+    @@index([groupNum])
+}
+
+model Room {
+    id         Int    @id @default(autoincrement())
+    roomNumber String @unique
+    building   String
+    floor      String
+    capacity   Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([roomNumber, building])
+}
+
+model Constraint {
+    id         Int    @id @default(autoincrement())
+    category   String @default("ตารางสอบ")
+    level      String @default("บังคับ")
+    constraint String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Teacher {
+    id            Int    @id @default(autoincrement())
+    firstname     String
+    lastname      String
+    department_id Int
+    tel           String @unique
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    department         Department          @relation(fields: [department_id], references: [id])
+    proctorPairs       ProctorPair[]
+
+    @@index([firstname, lastname, department_id])
+}
+
+model ProctorPair {
+    id         Int @id @default(autoincrement())
+    teacher_id Int @unique
+    groupNum   Int @default(0)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    teacher            Teacher             @relation(fields: [teacher_id], references: [id])
+
+    @@index([teacher_id])
+    @@index([groupNum])
+}
+
+model User {
+    id        String  @id @default(cuid()) @map("_id")
+    firstname String
+    lastname  String
+    username  String  @unique
+    password  String
+    email     String?
+    role      Role    @default(USER)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    tokens Token[]
+}
+
+model Token {
+    id         String   @id @default(cuid()) @map("_id")
+    token      String   @unique
+    user_id    String
+    expires_at DateTime
+
+    created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
+
+    user User @relation(fields: [user_id], references: [id])
+
+    @@index([user_id])
+    @@map("tokens")
+}
+
+model Schedule {
+    id             Int      @id @default(autoincrement())
+    className      String
+    departmentName String
+    courseCode     String
+    courseName     String
+    timeStart      DateTime
+    timeEnd        DateTime
+    duration       Int
+    roomNumber     String
+    semester       String
+    academicYear   String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([semester, academicYear])
+}
+
+model ExamRun {
+    id           Int        @id @default(autoincrement())
+    runKey       String     @unique @map("runkey")
+    username     String
+    semester     String
+    academicYear String
+    examStart    DateTime   @map("examstart")
+    examEnd      DateTime   @map("examend")
+    createdAt    DateTime   @default(now()) @map("createdat")
+    status       String     @default("draft")
+    note         String?
+
+    examPlans    ExamPlan[]
+    examUnits    ExamUnit[]
+}
+
+model ExamUnit {
+    id           Int        @id @default(autoincrement())
+    runKey       String     @map("runkey")
+    courseId     Int?       @map("course_id")
+    classId      Int?       @map("class_id")
+    enrollmentId Int?       @map("enrollment_id")
+    studentCount Int        @default(0) @map("student_count")
+    duration     Int        @default(0)
+    meta         Json       @default("{}")
+    createdAt    DateTime   @default(now()) @map("createdat")
+
+    examRun      ExamRun    @relation(fields: [runKey], references: [runKey], onDelete: Cascade)
+    examPlans    ExamPlan[]
+}
+
+model ExamPlan {
+    id             Int      @id @default(autoincrement())
+    runKey         String   @map("runkey")
+    examUnitId     Int?     @map("exam_unit_id")
+    roomId         Int?     @map("room_id")
+    enrollmentId   Int?     @map("enrollment_id")
+    classId        Int?     @map("class_id")
+    courseId       Int?     @map("course_id")
+    className      String   @map("classname")
+    departmentName String   @map("departmentname")
+    courseCode     String   @map("coursecode")
+    courseName     String   @map("coursename")
+    duration       Int
+    roomNumber     String   @map("roomnumber")
+    timeStart      DateTime @map("timestart")
+    timeEnd        DateTime @map("timeend")
+    violations     Json     @default("[]")
+    createdAt      DateTime @default(now()) @map("createdat")
+    
+    // Additional fields for filtering/metadata
+    semester       String?
+    academicYear   String?
+
+    examRun        ExamRun  @relation(fields: [runKey], references: [runKey], onDelete: Cascade)
+    examUnit       ExamUnit? @relation(fields: [examUnitId], references: [id])
+}

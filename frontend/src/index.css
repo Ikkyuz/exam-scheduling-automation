@@ -1,0 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400..800&family=Noto+Sans+Thai:wght@100..900&display=swap');
+@import "tailwindcss";
+
+html {
+  font-size: 18px;
+}
+
+* {
+  font-family: "Noto Sans Thai", sans-serif;
+  font-weight: 500; /* Set a default medium font weight for clarity */
+}

@@ -1,0 +1,34 @@
+{
+  "name": "backend",
+  "version": "1.0.50",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "build": "bun build.ts",
+    "start": "ts-node src/index.ts",
+    "test": "bun test",
+    "test:watch": "bun --watch test",
+    "test:coverage": "bun test --coverage",
+    "lint": "bun x --bun biome lint",
+    "db:migrate": "bun x prisma migrate dev"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "^1.4.1",
+    "@elysiajs/jwt": "^1.4.0",
+    "@elysiajs/swagger": "^1.3.1",
+    "@prisma/client": "^6.16.2",
+    "csv-parse": "^5.5.6",
+    "elysia": "latest",
+    "jspdf": "^4.0.0",
+    "jspdf-autotable": "^5.0.7",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.1",
+    "bun-types": "latest",
+    "dotenv": "^17.2.3",
+    "prisma": "^6.16.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "module": "src/index.js"
+}
