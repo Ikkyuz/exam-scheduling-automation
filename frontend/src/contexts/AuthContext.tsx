@@ -83,8 +83,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     setUser(userData);
                     localStorage.setItem('lastActivity', Date.now().toString()); // Refresh activity on successful load
                     toast.success(`ยินดีต้อนรับ, ${userData.firstname || userData.username}`, { id: 'auth-welcome' });
-                } catch (error) {
+                } catch (error: any) {
                     console.error('AuthContext verifyAuth: Failed to verify user session (localStorage).', error);
+                    
+                    // If verification fails for any reason, it's safer to clear local session
+                    // to prevent infinite redirect loops between PublicOnlyRoute and Dashboard
                     logout();
                 }
             } else {

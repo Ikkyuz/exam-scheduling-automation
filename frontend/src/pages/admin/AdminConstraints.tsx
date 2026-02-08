@@ -36,11 +36,13 @@ const AdminConstraints: React.FC = () => {
     const fetchConstraints = async (page = 1, search = '') => {
         setLoading(true);
         try {
-            const response = await api.get('/constraint', {
-                params: { page, search, itemsPerPage: 10 }
-            });
-            setConstraints(response.data.data || []);
-            setTotalPages(response.data.meta_data.totalPages);
+            const params: any = { page, itemsPerPage: 10 };
+            if (search.trim()) {
+                params.search = search.trim();
+            }
+            const response = await api.get('/constraint', { params });
+            setConstraints(response.data?.data || []);
+            setTotalPages(response.data?.meta_data?.totalPages || 1);
         } catch (err: unknown) {
             if (axios.isAxiosError(err) && err.response?.status === 404) {
                 setConstraints([]);

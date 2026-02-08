@@ -144,9 +144,9 @@ const LoginPage: React.FC = () => {
               transition={{ delay: 0.4, duration: 0.6 }}
             >
               <h1 className="text-5xl font-black text-slate-900 tracking-tighter leading-none">
-                ExamFlow
+                Synchro
                 <span className="relative inline-block ml-1">
-                  <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">AI</span>
+                  <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Flow</span>
                   <motion.span 
                     className="absolute -bottom-1 left-0 w-full h-1 bg-blue-500/20 rounded-full"
                     initial={{ width: 0 }}

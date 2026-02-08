@@ -45,9 +45,16 @@ const getClassSortKey = (className: string, deptName: string): string => {
 const thaiShaper = (text: string | any): string => {
   if (text === undefined || text === null) return "";
   if (typeof text !== 'string') return String(text);
+
   return text
-    .replace(/([ก-ฮ])([ัิีึืุู])([่้๊๋])/g, "$1$2$3")
-    .replace(/([ก-ฮ])([่้๊๋])([ัิีึืุู])/g, "$1$3$2")
+    // 1. จัดการลำดับ: พยัญชนะ + วรรณยุกต์ + สระบน -> พยัญชนะ + สระบน + วรรณยุกต์
+    .replace(/([ก-ฮ])([่้๊๋])([ัิีึื])/g, "$1$3$2")
+    // 2. จัดการลำดับ: พยัญชนะ + วรรณยุกต์ + สระล่าง -> พยัญชนะ + สระล่าง + วรรณยุกต์
+    .replace(/([ก-ฮ])([่้๊๋])([ุู])/g, "$1$3$2")
+    // 3. จัดการกรณี สระอำ (ำ) ที่มีวรรณยุกต์ (เช่น ก่ำ -> ก + ำ + ่)
+    .replace(/([่้๊๋])ำ/g, "ำ$1")
+    // 4. กำจัดวรรณยุกต์ซ้ำซ้อนที่อาจหลุดมา
+    .replace(/([่้๊๋ัิีึืุู])\1+/g, "$1")
     .trim();
 };
 
@@ -61,8 +68,10 @@ export const generateSchedulePDF = async (schedule: any[], semesterParam?: strin
 
     const fontPath = join(process.cwd(), "src/assets/fonts/Sarabun-Regular.ttf");
     const fontBase64 = readFileSync(fontPath).toString("base64");
-    doc.addFileToVFS("Sarabun-Regular.ttf", fontBase64);
-    doc.addFont("Sarabun-Regular.ttf", "Sarabun", "normal");
+    
+    // Register font with both the filename and the nickname
+    doc.addFileToVFS("Sarabun.ttf", fontBase64);
+    doc.addFont("Sarabun.ttf", "Sarabun", "normal");
     doc.setFont("Sarabun");
 
     const formatDate = (dateStr: string) => {
@@ -78,8 +87,9 @@ export const generateSchedulePDF = async (schedule: any[], semesterParam?: strin
       return `${hours}:${minutes}`;
     };
 
+    doc.setFont("Sarabun", "normal");
     doc.setFontSize(10);
-    doc.setTextColor(100, 116, 139);
+    doc.setTextColor(50, 50, 50);
     doc.text(thaiShaper(`พิมพ์เมื่อ: ${new Date().toLocaleDateString('th-TH')} ${new Date().toLocaleTimeString('th-TH')}`), 287, 22, { align: "right" });
 
     // 1. เรียงลำดับข้อมูลตามสาขาและระดับชั้น
@@ -123,19 +133,19 @@ export const generateSchedulePDF = async (schedule: any[], semesterParam?: strin
           const tableRow: any[] = [];
 
           if (dateIdx === 0 && rowIdx === 0) {
-            tableRow.push({ content: thaiShaper(classGroup.displayName), rowSpan: classGroup.totalRows, styles: { halign: 'center', fillColor: [248, 250, 252] } });
-            tableRow.push({ content: thaiShaper(classGroup.deptName), rowSpan: classGroup.totalRows, styles: { halign: 'center' } });
+            tableRow.push({ content: thaiShaper(classGroup.displayName), rowSpan: classGroup.totalRows, styles: { halign: 'center', font: "Sarabun" } });
+            tableRow.push({ content: thaiShaper(classGroup.deptName), rowSpan: classGroup.totalRows, styles: { halign: 'center', font: "Sarabun" } });
           }
 
           if (rowIdx === 0) {
-            tableRow.push({ content: thaiShaper(dateGroup.key), rowSpan: dateGroup.rows.length, styles: { halign: 'center' } });
+            tableRow.push({ content: thaiShaper(dateGroup.key), rowSpan: dateGroup.rows.length, styles: { halign: 'center', font: "Sarabun" } });
           }
 
           tableRow.push(thaiShaper(`${formatTime(row.timeStart)} - ${formatTime(row.timeEnd)}`));
           tableRow.push(row.duration);
           tableRow.push(thaiShaper(row.courseCode));
           tableRow.push(thaiShaper(row.courseName));
-          tableRow.push({ content: thaiShaper(row.roomNumber), styles: { halign: 'center', textColor: [37, 99, 235] } });
+          tableRow.push({ content: thaiShaper(row.roomNumber), styles: { halign: 'center', font: "Sarabun" } });
 
           tableBody.push(tableRow);
         });
@@ -151,19 +161,23 @@ export const generateSchedulePDF = async (schedule: any[], semesterParam?: strin
       margin: { left: 10, right: 10, bottom: 15 },
       styles: {
         font: "Sarabun",
+        fontStyle: "normal",
         fontSize: 9,
         cellPadding: 2.5,
         valign: 'middle',
         lineWidth: 0.1,
-        lineColor: [226, 232, 240],
+        lineColor: [0, 0, 0],
+        textColor: [0, 0, 0],
       },
       headStyles: {
         font: "Sarabun",
-        fillColor: [79, 70, 229],
-        textColor: [255, 255, 255],
+        fontStyle: "normal",
+        fillColor: [255, 255, 255],
+        textColor: [0, 0, 0],
         halign: 'center',
+        lineWidth: 0.2,
       },
-      alternateRowStyles: { fillColor: [248, 250, 252] },
+      alternateRowStyles: { fillColor: [255, 255, 255] },
       theme: 'grid',
       columnStyles: {
         0: { cellWidth: 25, noWrap: true }, // ชั้น

@@ -47,7 +47,8 @@ export namespace AuthController {
               role: t.String(),
               firstname: t.String(),
               lastname: t.String(),
-              email: t.Union([t.String(), t.Null()])
+              email: t.Union([t.String(), t.Null()]),
+              departmentName: t.Optional(t.Union([t.String(), t.Null()]))
             })
           }),
           500: t.String(),
@@ -82,16 +83,21 @@ export namespace AuthController {
                   sub: tokenRecord.user_id
                 };
                 const newToken = await jwtHandler.sign(newPayload);
+
+                // Fetch full user with departmentName
+                const fullUser = await UserService.findById(tokenRecord.user_id);
+
                 set.status = 200;
                 set.headers["x-user-role"] = tokenRecord.user.role;
                 set.headers["x-username"] = tokenRecord.user.username;
                 return {
-                  id: tokenRecord.user.id,
-                  username: tokenRecord.user.username,
-                  role: tokenRecord.user.role,
-                  firstname: tokenRecord.user.firstname,
-                  lastname: tokenRecord.user.lastname,
-                  email: tokenRecord.user.email,
+                  id: fullUser.id,
+                  username: fullUser.username,
+                  role: fullUser.role,
+                  firstname: fullUser.firstname,
+                  lastname: fullUser.lastname,
+                  email: fullUser.email,
+                  departmentName: (fullUser as any).departmentName || null,
                   access_token: newToken
                 };
               }
@@ -112,7 +118,7 @@ export namespace AuthController {
             firstname: user.firstname,
             lastname: user.lastname,
             email: user.email,
-            departmentName: user.departmentName
+            departmentName: (user as any).departmentName || null
           };
         } catch (error: any) {
           console.error("Auth /me error:", error);
@@ -120,7 +126,7 @@ export namespace AuthController {
             set.status = 401;
             return { message: "User not found" };
           }
-          set.status = "Internal Server Error";
+          set.status = 500;
           return "Failed";
         }
       },
@@ -133,7 +139,8 @@ export namespace AuthController {
             firstname: t.String(),
             lastname: t.String(),
             email: t.Union([t.String(), t.Null()]),
-            departmentName: t.Union([t.String(), t.Null()])
+            departmentName: t.Optional(t.Union([t.String(), t.Null()])),
+            access_token: t.Optional(t.String())
           }),
           401: t.Object({
             message: t.String()

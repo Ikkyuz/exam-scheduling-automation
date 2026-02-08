@@ -239,7 +239,7 @@ const AdminLayout: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-xl font-black whitespace-nowrap tracking-tight text-slate-800">
-                  ExamFlow <span className="text-blue-600">AI</span>
+                  Synchro<span className="text-blue-600">Flow</span>
                 </h2>
                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest -mt-1">
                   Scheduler
@@ -308,7 +308,7 @@ const AdminLayout: React.FC = () => {
                     {user?.username}
                   </p>
                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    Administrator
+                    ผู้ดูแลระบบ
                   </p>
                 </div>
               )}
@@ -331,7 +331,7 @@ const AdminLayout: React.FC = () => {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="lg:hidden flex items-center justify-between p-4 bg-white shadow-md h-16 sticky top-0 z-30 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-900">ExamFlow AI</h1>
+          <h1 className="text-xl font-bold text-gray-900">SynchroFlow</h1>
           <button
             onClick={() => setIsMobileMenuOpen(true)}
             className="p-2 rounded-full text-gray-700 hover:bg-gray-100 transition-colors"

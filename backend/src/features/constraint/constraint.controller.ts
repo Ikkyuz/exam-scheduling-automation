@@ -178,23 +178,24 @@ export namespace ConstraintController {
           const result = await ConstraintService.findAll({
             page,
             itemsPerPage,
-            search,
+            search: search || undefined,
           });
 
           if (result.data.length === 0 && result.meta_data.total > 0) {
-            set.status = "No Content"; // 204 - No body for 204
+             set.status = 204;
+             return;
           }
 
           return result;
         } catch (error: any) {
-          set.status = "Internal Server Error";
+          set.status = 500;
           return { message: error.message || "Internal Server Error" };
         }
       },
       {
         query: t.Object({
-          page: t.Optional(t.Numeric()),
-          itemsPerPage: t.Optional(t.Numeric()),
+          page: t.Optional(t.Any()),
+          itemsPerPage: t.Optional(t.Any()),
           search: t.Optional(t.String()),
         }),
         response: {
@@ -209,9 +210,7 @@ export namespace ConstraintController {
               previousPage: t.Boolean(),
             }),
           }),
-          204: t.Object({
-            message: t.String(),
-          }),
+          204: t.Void(),
           500: t.Object({ message: t.String() }),
         },
         tags: ["Constraints"],

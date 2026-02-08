@@ -122,9 +122,19 @@ export namespace UserService {
     // ถ้าเป็น Role USER ลองหาข้อมูลสาขาวิชาจากตาราง Teacher
     let departmentName = null;
     if (existing.role === Role.USER) {
-      const teacher = await TeacherRepository.findByName(existing.firstname, existing.lastname);
+      // Trim names to handle accidental spaces
+      const fname = existing.firstname.trim();
+      const lname = existing.lastname.trim();
+      const teacher = await TeacherRepository.findByName(fname, lname);
       if (teacher) {
         departmentName = teacher.department.name;
+      } else {
+        // Try searching with split username if first/last didn't work
+        const nameParts = existing.username.trim().split(/\s+/);
+        if (nameParts.length >= 2) {
+           const t2 = await TeacherRepository.findByName(nameParts[0], nameParts.slice(1).join(" "));
+           if (t2) departmentName = t2.department.name;
+        }
       }
     }
 
@@ -175,23 +185,23 @@ export namespace UserService {
       // 2. ถ้าไม่เจอ ให้ลองหาในตาราง Teacher โดยแยก username เป็น firstname และ lastname
       const nameParts = username.trim().split(/\s+/);
       if (nameParts.length >= 2) {
-        const firstname = nameParts[0];
-        const lastname = nameParts.slice(1).join(" ");
+        const firstname = nameParts[0].trim();
+        const lastname = nameParts.slice(1).join(" ").trim();
         teacherInfo = await TeacherRepository.findByNameAndTel(firstname, lastname, passwordOrTel);
         
         if (teacherInfo) {
           isTeacher = true;
           
-          // 2.1 ตรวจสอบว่ามี User นี้ในระบบหรือยัง (ใช้ username เป็นชื่อ-นามสกุล)
-          let existingUser = await UserRepository.findUserByUsername(`${teacherInfo.firstname} ${teacherInfo.lastname}`);
+          // 2.1 ตรวจสอบว่ามี User นี้ในระบบหรือยัง
+          const fullUsername = `${teacherInfo.firstname} ${teacherInfo.lastname}`;
+          let existingUser = await UserRepository.findUserByUsername(fullUsername);
           
           if (!existingUser) {
-            // 2.2 ถ้ายังไม่มี ให้สร้าง User ใหม่โดยอ้างอิงข้อมูลจาก Teacher
             existingUser = await UserRepository.create({
               firstname: teacherInfo.firstname,
               lastname: teacherInfo.lastname,
-              username: `${teacherInfo.firstname} ${teacherInfo.lastname}`,
-              password: await Bun.password.hash(passwordOrTel), // ใช้เบอร์โทรเป็นรหัสผ่านเริ่มต้น
+              username: fullUsername,
+              password: await Bun.password.hash(passwordOrTel),
               role: Role.USER,
               email: null
             });
@@ -203,6 +213,11 @@ export namespace UserService {
 
     if (!user) {
       throw new Error("User not found");
+    }
+
+    // Always try to fetch teacher info for USER role to get departmentName if it's missing
+    if (user.role === Role.USER && !teacherInfo) {
+        teacherInfo = await TeacherRepository.findByName(user.firstname.trim(), user.lastname.trim());
     }
 
     if (!isTeacher) {

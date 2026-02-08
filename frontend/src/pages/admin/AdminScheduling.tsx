@@ -509,8 +509,8 @@ const AdminScheduling: React.FC = () => {
                         <p className="text-xl font-bold text-slate-900">{validation.errors.length}</p>
                         {validation.summary.violations && (
                           <p className="text-xs text-slate-400">
-                            (วิกฤต: <span className={validation.summary.violations.critical > 0 ? "text-rose-500 font-bold" : ""}>{validation.summary.violations.critical}</span>, 
-                            เตือน: <span className={validation.summary.violations.warning > 0 ? "text-amber-500 font-bold" : ""}>{validation.summary.violations.warning}</span>)
+                            (วิกฤต: <span className={validation.summary.violations.critical > 0 ? "text-rose-500 font-bold" : ""}>{validation.summary.violations.critical === 0 ? "ไม่มี" : validation.summary.violations.critical}</span>, 
+                            เตือน: <span className={validation.summary.violations.warning > 0 ? "text-amber-500 font-bold" : ""}>{validation.summary.violations.warning === 0 ? "ไม่มี" : validation.summary.violations.warning}</span>)
                           </p>
                         )}
                       </div>

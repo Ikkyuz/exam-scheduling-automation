@@ -61,8 +61,10 @@ export namespace ExamPlanRepository {
             
             const params: any[] = [targetRunKey];
             if (departmentName) {
-                params.push(departmentName);
-                query += ` AND "departmentname" = $2`;
+                // Remove prefixes like "สาขาวิชา" or "สาขา" to match more flexibly
+                const cleanDeptName = departmentName.replace(/^(สาขาวิชา|สาขา)/, '').trim();
+                params.push(`%${cleanDeptName}%`);
+                query += ` AND "departmentname" ILIKE $2`;
             }
             
             query += ` ORDER BY "timestart" ASC, "classname" ASC`;
