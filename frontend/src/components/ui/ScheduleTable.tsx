@@ -40,19 +40,16 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ schedule }) => {
         return "";
     };
 
-    // Helper to format class name correctly (e.g., ปวช.1/1คป.)
     const formatClassName = (className: string, deptName: string): string => {
         const abbr = getDeptAbbr(deptName);
         const cleanedClass = className.replace(/\s?[ก-ฮ]{2}\.$/, "").trim();
         return abbr ? `${cleanedClass}${abbr}` : cleanedClass;
     };
 
-    // Helper for advanced sorting: Dept -> Level -> Section
     const getClassSortKey = (className: string, deptName: string): string => {
         const parts = className.split('/');
         const level = parts[0].trim();
         const section = parts[1] ? parts[1].trim().padStart(3, '0') : "000";
-        // Dept first to keep all levels of same dept together
         return `${deptName}_${level}_${section}`;
     };
 
@@ -76,7 +73,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ schedule }) => {
     const groupedData = useMemo(() => {
         if (!schedule || schedule.length === 0) return [];
 
-        // 1. เรียงลำดับตามสาขาและระดับชั้น
         const sorted = [...schedule].sort((a, b) => {
             const aKey = getClassSortKey(a.className, a.departmentName);
             const bKey = getClassSortKey(b.className, b.departmentName);
@@ -84,7 +80,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ schedule }) => {
             return new Date(a.timeStart).getTime() - new Date(b.timeStart).getTime();
         });
 
-        // 2. จัดกลุ่ม
         const classes: ClassGroup[] = [];
         sorted.forEach(item => {
             const displayClassName = formatClassName(item.className, item.departmentName);
@@ -114,53 +109,53 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ schedule }) => {
     }, [schedule]);
 
     if (!schedule || schedule.length === 0) {
-        return <div className="text-center py-12 text-slate-400 bg-white rounded-2xl border border-slate-200">ไม่มีข้อมูลตารางสอบ</div>;
+        return <div className="text-center py-12 text-slate-400 bg-white border border-slate-200">ไม่มีข้อมูลตารางสอบ</div>;
     }
 
     return (
-        <div className="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
+        <div className="overflow-x-auto border border-slate-300">
             <table className="w-full text-sm text-left border-collapse bg-white">
-                <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-300">
+                <thead className="bg-slate-50 text-slate-800 font-bold border-b border-slate-300">
                     <tr>
-                        <th className="px-4 py-3 border-r border-slate-300 text-center w-32">ชั้น</th>
-                        <th className="px-4 py-3 border-r border-slate-300 text-center">สาขาวิชา</th>
+                        <th className="px-4 py-3 border-r border-slate-300 text-center w-28">ชั้น</th>
+                        <th className="px-4 py-3 border-r border-slate-300 text-center w-48">สาขาวิชา</th>
                         <th className="px-4 py-3 border-r border-slate-300 text-center w-32">วันสอบ</th>
-                        <th className="px-4 py-3 border-r border-slate-300 text-center w-32">เวลา</th>
-                        <th className="px-4 py-3 border-r border-slate-300 text-center w-24">ระยะเวลา (นาที)</th>
+                        <th className="px-4 py-3 border-r border-slate-300 text-center w-40">เวลาสอบ</th>
+                        <th className="px-4 py-3 border-r border-slate-300 text-center w-20">ระยะเวลา</th>
                         <th className="px-4 py-3 border-r border-slate-300 text-center w-28">รหัสวิชา</th>
-                        <th className="px-4 py-3 border-r border-slate-300 text-center">รายวิชา</th>
-                        <th className="px-4 py-3 border-r border-slate-300 text-center w-24">ห้องสอบ</th>
+                        <th className="px-4 py-3 border-r border-slate-300">รายวิชา</th>
+                        <th className="px-4 py-3 text-center w-32">ห้องสอบ</th>
                     </tr>
                 </thead>
-                <tbody className="text-slate-600">
+                <tbody className="text-slate-700">
                     {groupedData.map((classGroup, cgIdx) => (
                         <React.Fragment key={`cg-${classGroup.displayName}-${cgIdx}`}>
                             {classGroup.dates.map((dateGroup, dateIdx) => (
                                 <React.Fragment key={`dg-${classGroup.displayName}-${dateGroup.key}-${dateIdx}`}>
                                     {dateGroup.rows.map((row: ScheduleResult, rowIdx: number) => (
-                                        <tr key={`row-${classGroup.displayName}-${dateGroup.key}-${row.courseCode}-${rowIdx}`} className="border-b border-slate-200 hover:bg-slate-50/50 transition-colors">
+                                        <tr key={`row-${classGroup.displayName}-${dateGroup.key}-${row.courseCode}-${rowIdx}`} className="border-b border-slate-200">
                                             {dateIdx === 0 && rowIdx === 0 && (
                                                 <>
-                                                    <td rowSpan={classGroup.totalRows} className="px-4 py-3 border-r border-slate-300 font-bold text-slate-800 align-middle text-center bg-slate-50/20">
+                                                    <td rowSpan={classGroup.totalRows} className="px-4 py-3 border-r border-slate-300 align-middle text-center font-bold">
                                                         {classGroup.displayName}
                                                     </td>
-                                                    <td rowSpan={classGroup.totalRows} className="px-4 py-3 border-r border-slate-300 font-medium text-slate-700 align-middle text-center">
+                                                    <td rowSpan={classGroup.totalRows} className="px-4 py-3 border-r border-slate-300 align-middle text-center">
                                                         {classGroup.deptName}
                                                     </td>
                                                 </>
                                             )}
                                             
                                             {rowIdx === 0 && (
-                                                <td rowSpan={dateGroup.rows.length} className="px-4 py-3 border-r border-slate-300 font-medium text-slate-700 align-middle text-center" >
+                                                <td rowSpan={dateGroup.rows.length} className="px-4 py-3 border-r border-slate-300 align-middle text-center">
                                                     {dateGroup.key}
                                                 </td>
                                             )}
 
-                                            <td className="px-4 py-3 border-r border-slate-300 text-center font-mono">
+                                            <td className="px-4 py-3 border-r border-slate-300 text-center">
                                                 {formatTime(row.timeStart)} - {formatTime(row.timeEnd)}
                                             </td>
                                             <td className="px-4 py-3 border-r border-slate-300 text-center">
-                                                {row.duration}
+                                                {row.duration} น.
                                             </td>
                                             <td className="px-4 py-3 border-r border-slate-300 text-center">
                                                 {row.courseCode}
@@ -168,7 +163,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ schedule }) => {
                                             <td className="px-4 py-3 border-r border-slate-300">
                                                 {row.courseName}
                                             </td>
-                                            <td className="px-4 py-3 text-center font-bold text-slate-700">
+                                            <td className="px-4 py-3 text-center font-bold">
                                                 {(() => {
                                                   const rn = (row as any).roomnumber ?? (row as any).roomNumber ?? (row as any).room_no;
                                                   if (rn === null || rn === undefined) return "-";
