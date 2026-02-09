@@ -181,7 +181,7 @@ const UserDashboard = () => {
           },
           { 
             label: "จำนวนวิชาสอบ", 
-            value: `${schedule.length} รายวิชา`, 
+            value: `${new Set(schedule.map(s => s.courseCode || s.courseId)).size} รายวิชา`, 
             icon: BookOpen, 
             color: "from-rose-500 to-rose-600",
             light: "bg-rose-50",

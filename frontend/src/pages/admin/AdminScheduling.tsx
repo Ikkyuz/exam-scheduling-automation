@@ -122,8 +122,12 @@ const AdminScheduling: React.FC = () => {
             setValidation({
               isValid: true,
               summary: {
-                totalExams: response.data.length,
-                totalRoomsUsed: new Set(response.data.map((s: any) => String(s.roomnumber || s.roomNumber || ""))).size,
+                totalExams: new Set(response.data.map((s: any) => s.courseCode || s.courseId)).size,
+                totalRoomsUsed: new Set(
+                  response.data
+                    .map((s: any) => String(s.roomnumber || s.roomNumber || "").trim())
+                    .filter((r: string) => r !== "")
+                ).size,
                 violations: { critical: 0, warning: 0 }
               },
               errors: []
@@ -226,8 +230,12 @@ const AdminScheduling: React.FC = () => {
                       finalValidation = {
                         isValid: isSuccess && errors.length === 0,
                         summary: {
-                          totalExams: finalSchedule.length,
-                          totalRoomsUsed: new Set(finalSchedule.map((s: any) => String(s.roomnumber || s.roomNumber || ""))).size,
+                          totalExams: new Set(finalSchedule.map((s: any) => s.courseCode || s.courseId)).size,
+                          totalRoomsUsed: new Set(
+                            finalSchedule
+                              .map((s: any) => String(s.roomnumber || s.roomNumber || "").trim())
+                              .filter((r: string) => r !== "")
+                          ).size,
                           violations: { 
                             critical: errors.length, 
                             warning: 0 
@@ -244,7 +252,14 @@ const AdminScheduling: React.FC = () => {
                         finalSchedule = content;
                         finalValidation = { 
                           isValid: true, 
-                          summary: { totalExams: content.length, totalRoomsUsed: new Set(content.map((s: any) => s.roomNumber)).size }, 
+                          summary: { 
+                            totalExams: new Set(content.map((s: any) => s.courseCode || s.courseId)).size, 
+                            totalRoomsUsed: new Set(
+                              content
+                                .map((s: any) => String(s.roomnumber || s.roomNumber || "").trim())
+                                .filter((r: string) => r !== "")
+                            ).size 
+                          }, 
                           errors: [] 
                         };
                       }
