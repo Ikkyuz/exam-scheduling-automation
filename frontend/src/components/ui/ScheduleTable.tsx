@@ -121,7 +121,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ schedule }) => {
                         <th className="px-4 py-3 border-r border-slate-300 text-center w-48">สาขาวิชา</th>
                         <th className="px-4 py-3 border-r border-slate-300 text-center w-32">วันสอบ</th>
                         <th className="px-4 py-3 border-r border-slate-300 text-center w-40">เวลาสอบ</th>
-                        <th className="px-4 py-3 border-r border-slate-300 text-center w-20">ระยะเวลา</th>
+                        <th className="px-4 py-3 border-r border-slate-300 text-center w-20">ระยะเวลา (นาที)</th>
                         <th className="px-4 py-3 border-r border-slate-300 text-center w-28">รหัสวิชา</th>
                         <th className="px-4 py-3 border-r border-slate-300">รายวิชา</th>
                         <th className="px-4 py-3 text-center w-32">ห้องสอบ</th>
@@ -155,7 +155,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ schedule }) => {
                                                 {formatTime(row.timeStart)} - {formatTime(row.timeEnd)}
                                             </td>
                                             <td className="px-4 py-3 border-r border-slate-300 text-center">
-                                                {row.duration} น.
+                                                {row.duration}
                                             </td>
                                             <td className="px-4 py-3 border-r border-slate-300 text-center">
                                                 {row.courseCode}

@@ -17,7 +17,7 @@ const UserNavbar: React.FC = () => {
               <h1 className="text-xl font-black text-slate-800 tracking-tight leading-none">
                 Synchro<span className="text-blue-600">Flow</span>
               </h1>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
                 Student & Instructor
               </p>
             </div>
@@ -25,10 +25,10 @@ const UserNavbar: React.FC = () => {
 
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex flex-col items-end mr-2">
-              <span className="text-sm font-bold text-slate-700 leading-none">
+              <span className="text-base font-bold text-slate-700 leading-none">
                 {user?.firstname ? `${user.firstname} ${user.lastname || ''}` : user?.username}
               </span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1 italic">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1 italic">
                 {user?.departmentName || (user?.role === 'ADMIN' ? 'ผู้ดูแลระบบ' : 'ผู้ใช้งานทั่วไป')}
               </span>
             </div>
