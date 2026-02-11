@@ -181,7 +181,7 @@ export namespace EnrollmentController {
         async ({ set }) => {
             try {
                 const worksheet = xlsx.utils.aoa_to_sheet([
-                    ["รหัสชั้นเรียน", "รหัสวิชา (ID)"]
+                    ["ชื่อชั้นเรียน", "รหัสวิชา"]
                 ]);
                 const workbook = xlsx.utils.book_new();
                 xlsx.utils.book_append_sheet(workbook, worksheet, "Enrollments");

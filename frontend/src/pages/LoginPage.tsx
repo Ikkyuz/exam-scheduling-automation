@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LogIn, User, Lock, Eye, EyeOff, Sparkles, Copyright } from "lucide-react";
+import { LogIn, User, Lock, Eye, EyeOff, Workflow, Copyright } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 import axios from "axios";
@@ -132,7 +132,7 @@ const LoginPage: React.FC = () => {
                   }}
                   className="relative bg-gradient-to-br from-indigo-100 to-purple-100 p-4 rounded-2xl shadow-2xl"
                 >
-                  <Sparkles className="h-12 w-12 text-indigo-600" />
+                  <Workflow className="h-12 w-12 text-indigo-600" />
                 </motion.div>
               </div>
             </motion.div>
@@ -144,7 +144,7 @@ const LoginPage: React.FC = () => {
               transition={{ delay: 0.4, duration: 0.6 }}
             >
               <h1 className="text-5xl font-black text-slate-900 tracking-tighter leading-none">
-                Synchro
+                Exam
                 <span className="relative inline-block ml-1">
                   <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Flow</span>
                   <motion.span 
@@ -298,7 +298,7 @@ const LoginPage: React.FC = () => {
                 Powered by
               </p>
               <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-black text-sm tracking-tight">
-                ExamFlow AI
+                ExamFlow
               </span>
             </div>
             

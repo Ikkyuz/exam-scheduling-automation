@@ -1,6 +1,7 @@
 import React from "react";
-import { LogOut, Zap, User as UserIcon } from "lucide-react";
+import { LogOut, Workflow, User as UserIcon } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { motion } from "framer-motion";
 
 const UserNavbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -11,11 +12,23 @@ const UserNavbar: React.FC = () => {
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
-              <Zap className="text-white fill-white" size={20} />
+              <motion.div
+                animate={{
+                  rotate: [0, 5, -5, 5, 0],
+                  scale: [1, 1.1, 1],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              >
+                <Workflow className="text-white" size={20} />
+              </motion.div>
             </div>
             <div>
               <h1 className="text-xl font-black text-slate-800 tracking-tight leading-none">
-                Synchro<span className="text-blue-600">Flow</span>
+                Exam<span className="text-blue-600">Flow</span>
               </h1>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
                 Student & Instructor

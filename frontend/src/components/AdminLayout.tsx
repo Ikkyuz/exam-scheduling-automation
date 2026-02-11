@@ -19,7 +19,7 @@ import {
   LogOut,
   Menu,
   X,
-  Zap,
+  Workflow,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -234,12 +234,12 @@ const AdminLayout: React.FC = () => {
                     ease: "easeInOut",
                   }}
                 >
-                  <Zap className="text-white fill-white" size={24} />
+                  <Workflow className="text-white" size={24} />
                 </motion.div>
               </div>
               <div>
                 <h2 className="text-xl font-black whitespace-nowrap tracking-tight text-slate-800">
-                  Synchro<span className="text-blue-600">Flow</span>
+                  Exam<span className="text-blue-600">Flow</span>
                 </h2>
                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest -mt-1">
                   Scheduler
@@ -331,7 +331,7 @@ const AdminLayout: React.FC = () => {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="lg:hidden flex items-center justify-between p-4 bg-white shadow-md h-16 sticky top-0 z-30 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-900">SynchroFlow</h1>
+          <h1 className="text-xl font-bold text-gray-900">ExamFlow</h1>
           <button
             onClick={() => setIsMobileMenuOpen(true)}
             className="p-2 rounded-full text-gray-700 hover:bg-gray-100 transition-colors"

@@ -1,0 +1,765 @@
+{
+  "name": "Exam Schedule - v.3",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select\n  e.id as enrollment_id,\n  cl.id as class_id,\n  c.id as course_id,\n  cl.name as className,\n  d.\"name\" as departmentName,\n  cl.amount,\n  c.code as courseCode,\n  c.name as courseName,\n  c.duration\nfrom \"Enrollment\" e\njoin \"Class\" cl on e.class_id = cl.id\njoin \"Course\" c on e.course_id = c.id\njoin \"Department\" d on d.id = cl.department_id\norder by d.id, cl.id, c.id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -752,
+        0
+      ],
+      "id": "f0572382-d6ef-458b-b5e5-57e276160049",
+      "name": "Query Enrollments",
+      "credentials": {
+        "postgres": {
+          "id": "b7A3C94287yHA68w",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select r.\"roomNumber\", r.capacity \nfrom \"Room\" r\norder by r.\"roomNumber\";",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -752,
+        192
+      ],
+      "id": "033487e0-00b0-4ef2-957b-31a9af15585a",
+      "name": "Query Rooms",
+      "credentials": {
+        "postgres": {
+          "id": "b7A3C94287yHA68w",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select c.\"constraint\"\nfrom \"Constraint\" c\nwhere c.category = 'ตารางสอบ'\norder by c.\"id\";",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -752,
+        384
+      ],
+      "id": "67cda676-dc99-4850-a26e-0a47322d2eb3",
+      "name": "Query Constraints",
+      "credentials": {
+        "postgres": {
+          "id": "b7A3C94287yHA68w",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -528,
+        256
+      ],
+      "id": "40e0f2f1-98f6-450b-bc8e-ff6e0d8d65e4",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select cg.\"groupNum\" , c.code, c.\"name\"\nfrom \"CourseGroup\" cg inner join \"Course\" c ON cg.course_id = c.id\norder by cg.\"groupNum\" ;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -752,
+        576
+      ],
+      "id": "925ef8f1-9620-4825-874c-2e2dc19c21a0",
+      "name": "Query Course Group",
+      "credentials": {
+        "postgres": {
+          "id": "b7A3C94287yHA68w",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "011ad7a3-f0ee-434b-9532-47bf4c9b6ef9",
+              "name": "username",
+              "value": "={{ $json.body.username }}",
+              "type": "string"
+            },
+            {
+              "id": "409a78ca-d23f-42af-8768-950a44026b96",
+              "name": "semester",
+              "value": "={{ $json.body.semester }}",
+              "type": "string"
+            },
+            {
+              "id": "15d3ace9-6c5c-43ce-b97b-7902f2ca21a5",
+              "name": "academicYear",
+              "value": "={{ $json.body.academicYear }}",
+              "type": "string"
+            },
+            {
+              "id": "c30339cf-5641-4e16-9087-47e2a9853dc4",
+              "name": "examStart",
+              "value": "={{ $json.body.examStart }}",
+              "type": "string"
+            },
+            {
+              "id": "83494931-d607-4e5d-9e21-8b93a71af00c",
+              "name": "examEnd",
+              "value": "={{ $json.body.examEnd }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -976,
+        288
+      ],
+      "id": "0952e008-2c7b-4a53-9e50-bc24ae233e03",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const enrollments = $items(\"Query Enrollments\").map(i => i.json);\nconst rooms = $items(\"Query Rooms\").map(i => i.json);\nconst constraints = $items(\"Query Constraints\").map(i => i.json);\nconst courseGroupRows = $items(\"Query Course Group\").map(i => i.json);\n\n// group courseGroup เป็น array ตาม groupNum\nconst grouped = courseGroupRows.reduce((acc, row) => {\n  if (!acc[row.groupNum]) acc[row.groupNum] = { groupNum: row.groupNum, courses: [] };\n  acc[row.groupNum].courses.push({ code: row.code, name: row.name });\n  return acc;\n}, {});\n\nconst courseGroups = Object.values(grouped).sort((a,b) => a.groupNum - b.groupNum);\n\nreturn [{\n  json: {\n    config: $items(\"Edit Fields\")[0].json,\n    enrollments,\n    rooms,\n    constraints,\n    courseGroups,\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -304,
+        288
+      ],
+      "id": "b932bd73-3ef9-45ca-9ae1-3bdf003cd23d",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $json.config;\n\n// runKey แบบอ่านง่าย + ไม่ซ้ำง่าย (เวลารัน + user)\nconst now = new Date();\nconst pad = (n) => String(n).padStart(2, \"0\");\nconst ts =\n  now.getFullYear() +\n  pad(now.getMonth() + 1) +\n  pad(now.getDate()) + \"_\" +\n  pad(now.getHours()) +\n  pad(now.getMinutes()) +\n  pad(now.getSeconds());\n\nconst runKey = `${config.username}_${ts}`;\n\nreturn [{\n  json: {\n    ...$json,\n    runKey,\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        288
+      ],
+      "id": "b8557021-4d71-4961-a9fc-50337d737d1d",
+      "name": "Make Run Key"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        368,
+        288
+      ],
+      "id": "0a7f44a8-392a-442c-b743-b75ce6a7f55d",
+      "name": "Attach Run Id"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO \"ExamRun\"\n(runKey, username, semester, academicYear, examStart, examEnd, status)\nVALUES\n(\n  '{{ $json.runKey }}',\n  '{{ $json.config.username }}',\n  '{{ $json.config.semester }}',\n  '{{ $json.config.academicYear }}',\n  '{{ $json.config.examStart }}',\n  '{{ $json.config.examEnd }}',\n  'draft'\n)\nRETURNING id, runKey, status, createdAt;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        144,
+        368
+      ],
+      "id": "aa280b92-ecf0-493f-a5bb-495fb31634be",
+      "name": "Insert Exam Run",
+      "credentials": {
+        "postgres": {
+          "id": "b7A3C94287yHA68w",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Expect 1 item ที่มี:\n// - config\n// - enrollments (array)\n// - courseGroups (array of { groupNum, courses: [{code,name}] })\n// - examRunId, runKey\n\nconst data = items[0].json;\n\n// 1) ทำ map: courseCode -> groupNum\nconst codeToGroupNum = new Map();\nconst courseGroups = Array.isArray(data.courseGroups) ? data.courseGroups : [];\n\nfor (const g of courseGroups) {\n  const groupNum = g.groupNum;\n  const courses = Array.isArray(g.courses) ? g.courses : [];\n  for (const c of courses) {\n    if (c?.code) codeToGroupNum.set(String(c.code).trim(), groupNum);\n  }\n}\n\n// 2) แตก enrollments เป็น candidate items\nconst enrollments = Array.isArray(data.enrollments) ? data.enrollments : [];\n\nconst out = enrollments.map((e) => {\n  // ระวังชื่อ field: บาง query ของคุณใช้ classname/departmentname เป็นตัวเล็ก\n  const className = e.className ?? e.classname ?? null;\n  const departmentName = e.departmentName ?? e.departmentname ?? null;\n\n  const courseCode = String(e.courseCode ?? e.coursecode ?? \"\").trim();\n  const groupNum = codeToGroupNum.has(courseCode) ? codeToGroupNum.get(courseCode) : null;\n\n  return {\n    json: {\n      examRunId: data.examRunId ?? data.examRunID ?? null,\n      runKey: data.runKey ?? null,\n\n      enrollmentId: e.enrollment_id ?? e.enrollmentId ?? e.id ?? null,\n      classId: e.class_id ?? e.classId ?? null,\n      courseId: e.course_id ?? e.courseId ?? null,\n\n      className,\n      departmentName,\n\n      amount: e.amount ?? null,\n      courseCode: courseCode || null,\n      courseName: e.courseName ?? e.coursename ?? null,\n      duration: Number(e.duration ?? 0),\n\n      groupNum, // สำคัญ: เอาไว้จัดพร้อมกัน\n      // ช่องว่างสำหรับตอนจัดจริง\n      timeStart: null,\n      timeEnd: null,\n      roomNumber: null,\n      violations: [],\n    },\n  };\n});\n\n// กันกรณี enrollments ว่าง (ตามกติกาคุณไม่อยากได้ [])\nif (out.length === 0) {\n  return [{ json: { error: \"No enrollments found\", examRunId: data.examRunId ?? null, runKey: data.runKey ?? null } }];\n}\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        288
+      ],
+      "id": "8434cf7b-d5f9-44d0-a6f8-7014d2da76a4",
+      "name": "Build Exam Candidates"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build Time Slots (PATCH)\n// ต้องการให้ 1 enrollment = 1 unit เท่านั้น (ไม่แตกตาม groupNum)\n\nreturn items.map(i => ({\n  json: {\n    ...i.json,\n    // กันพลาด: ถ้ามี field taskKey/groupIndex/groupSize จากของเดิม ให้ไม่ใช้\n    taskKey: undefined,\n    groupIndex: undefined,\n    groupSize: undefined,\n\n    // ใช้ student_count จาก amount ตรง ๆ\n    studentCount: i.json.amount ?? i.json.studentCount ?? 0,\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        288
+      ],
+      "id": "7259abcc-f034-41d8-82e0-fd005f02a9f4",
+      "name": "Build Time Slots"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO \"ExamUnit\"\n(runkey, enrollment_id, class_id, course_id, student_count, duration, meta)\nVALUES\n(\n  '{{ $json.runkey }}',\n  {{ Number($json.enrollment_id) }},\n  {{ Number($json.class_id) }},\n  {{ Number($json.course_id) }},\n  {{ Number($json.student_count) }},\n  {{ Number($json.duration) }},\n  '{{ JSON.stringify($json.meta ?? {}).replace(/'/g, \"''\") }}'::jsonb\n)\nRETURNING id, runkey;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1264,
+        288
+      ],
+      "id": "598ed3ac-1108-4c58-bebd-e17e44bc70ef",
+      "name": "Insert ExamUnit",
+      "credentials": {
+        "postgres": {
+          "id": "b7A3C94287yHA68w",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO \"ExamPlan\"\n(runkey, exam_unit_id, enrollment_id, class_id, course_id,\n classname, departmentname, coursecode, coursename, duration,\n violations)\nVALUES\n(\n  '{{ $json.runkey }}',\n  {{ $json.id }},\n  {{ $node[\"Prepare ExamUnit Rows\"].json.enrollment_id }},\n  {{ $node[\"Prepare ExamUnit Rows\"].json.class_id }},\n  {{ $node[\"Prepare ExamUnit Rows\"].json.course_id }},\n  '{{ $node[\"Prepare ExamUnit Rows\"].json.meta.className }}',\n  '{{ $node[\"Prepare ExamUnit Rows\"].json.meta.departmentName }}',\n  '{{ $node[\"Prepare ExamUnit Rows\"].json.meta.courseCode }}',\n  '{{ $node[\"Prepare ExamUnit Rows\"].json.meta.courseName }}',\n  {{ $node[\"Prepare ExamUnit Rows\"].json.duration }},\n  '[]'::jsonb\n)\nRETURNING id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1488,
+        288
+      ],
+      "id": "32f371e6-6419-43bc-acf2-df6d5738c1e6",
+      "name": "Insert ExamPlan From ExamUnit",
+      "credentials": {
+        "postgres": {
+          "id": "b7A3C94287yHA68w",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  p.id as id,                -- ย่อ exam_plan_id เหลือแค่ id\n  p.classname as class,      -- ย่อชื่อ field เพื่อประหยัด Token\n  p.departmentname as dept,\n  p.coursecode as code,\n  p.coursename as name,\n  u.student_count as students,\n  p.duration as dur\nFROM \"ExamPlan\" p\nJOIN \"ExamUnit\" u ON u.id = p.exam_unit_id\nWHERE p.runkey = '{{ $(\"Make Run Key\").first().json.runKey }}'\n-- เพิ่ม LIMIT เพื่อทดสอบว่า Error 'parts' หายไปไหมเมื่อข้อมูลน้อยลง\nLIMIT 50;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1712,
+        288
+      ],
+      "id": "b9cb6d6f-baa3-4ee7-8087-3440e59c3bae",
+      "name": "Query Plan For AI",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "b7A3C94287yHA68w",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Prepare ExamUnit Rows (1 item => 1 ExamUnit)\n// ต้องตั้ง Mode: Run Once for Each Item\n\nreturn {\n  json: {\n    runkey: $json.runKey,\n    enrollment_id: $json.enrollmentId,\n    class_id: $json.classId,\n    course_id: $json.courseId,\n\n    // จำนวนเด็ก = amount ของ class\n    student_count: $json.amount ?? 0,\n\n    duration: Number($json.duration ?? 0),\n\n    meta: {\n      className: $json.className ?? null,\n      departmentName: $json.departmentName ?? null,\n      courseCode: $json.courseCode ?? null,\n      courseName: $json.courseName ?? null,\n      groupNum: $json.groupNum ?? null,\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        288
+      ],
+      "id": "f376598e-d087-493f-9877-b1e6eef4458c",
+      "name": "Prepare ExamUnit Rows"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ดึงข้อมูลหลัก\nconst config = $items(\"Code in JavaScript\")[0]?.json?.config || {};\nconst rooms = $items(\"Code in JavaScript\")[0]?.json?.rooms || [];\nconst constraints = $items(\"Code in JavaScript\")[0]?.json?.constraints || [];\nconst runKey = $(\"Build Time Slots\").first()?.json?.summary?.runKey || \"N/A\";\n\n// ดึงรายการสอบ และแก้ไข Case Sensitivity + Mapping ใหม่\nconst planItems = $items(\"Query Plan For AI\").map(i => {\n    const d = i.json;\n    return {\n        // ดักจับ id ทุกรูปแบบ\n        exam_plan_id: d.id || d.exam_plan_id || \"0\", \n        \n        // ดักจับกลุ่มเรียน: class (แบบใหม่), classname (แบบเก่า), className (camelCase)\n        className: d.class || d.classname || d.className || \"N/A\",\n        \n        // ดักจับแผนก: dept (แบบใหม่), departmentname (แบบเก่า), departmentName (camelCase)\n        departmentName: d.dept || d.departmentname || d.departmentName || \"N/A\",\n        \n        // ดักจับรหัสวิชา: code (แบบใหม่), coursecode (แบบเก่า), courseCode (camelCase)\n        courseCode: d.code || d.coursecode || d.courseCode || \"N/A\",\n        \n        // ดักจับชื่อวิชา: name (แบบใหม่), coursename (แบบเก่า), courseName (camelCase)\n        courseName: d.name || d.coursename || d.courseName || \"N/A\",\n        \n        // ดักจับจำนวนเด็ก: students (แบบใหม่), student_count (แบบเก่า)\n        students: parseInt(d.students || d.student_count || 0),\n        \n        // ดักจับระยะเวลา: dur (แบบใหม่), duration (แบบเก่า)\n        duration: parseInt(d.dur || d.duration || 0)\n    };\n});\n\nreturn [{\n    json: {\n        runKey,\n        config,\n        rooms,\n        constraints,\n        planItems\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1936,
+        288
+      ],
+      "id": "1edb5d57-d02a-44b1-bd8a-b51a3cc4d80b",
+      "name": "Build AI Prompt Payload"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "schedule-exams",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1200,
+        288
+      ],
+      "id": "03bfa5b8-3ef7-450d-840a-3eee742a53f6",
+      "name": "Receive Exam Config",
+      "webhookId": "7cfd623e-0d84-42b1-aed5-345a3724cb64"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=TASK: Assign a valid 'roomNumber' to each item in this timing-ready schedule.\nSCHEDULE: {{ $json.output }} \nROOMS: {{ JSON.stringify($node[\"Build AI Prompt Payload\"].json.rooms) }}\n\nINSTRUCTION: Check student counts against room capacity. roomNumber must be an Integer.",
+        "options": {
+          "systemMessage": "## ROLE\nYou are a \"Space Optimizer\" expert in logistics and room capacity management.\n\n## ⚙️ LOGIC & RULES\n1. **ROOM SELECTION:** Assign ONLY `roomNumber` values that are raw **Numbers** from the provided official list.\n2. **NO MODIFICATION:** You are STRICTLY FORBIDDEN from changing the `timeStart` or `timeEnd` provided in the input.\n3. **CAPACITY:** Student count (`students`) MUST be less than or equal to the room's `capacity`.\n4. **NO COLLISION:** A room cannot host more than one `courseCode` at the same time.\n\n## 📤 OUTPUT SCHEMA (JSON ARRAY)\nReturn the input JSON with the added field `\"roomNumber\": number`."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1200,
+        800
+      ],
+      "id": "c05cdce3-1c01-48e7-94fd-b24d920d96b1",
+      "name": "The Space Optimizer",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{\n(function() {\n  // ฟังก์ชันช่วย Parse JSON พร้อมระบบดักจับ Error ที่เข้มงวดขึ้น\n  const safeParse = (nodeName) => {\n    try {\n      const node = $(nodeName).first();\n      if (!node) return { error: \"NODE_NOT_FOUND\" };\n      \n      const raw = node.json.output || node.json.text || \"\";\n      if (!raw) return null;\n\n      // ลบ Markdown Code Blocks และคลีนช่องว่าง\n      const clean = raw.replace(/```(?:json)?/gi, \"\").replace(/```/g, \"\").trim();\n      return JSON.parse(clean);\n    } catch (e) { \n      return { error: \"INVALID_JSON_FORMAT\", raw: raw }; \n    }\n  };\n\n  // ดึงผลลัพธ์จากโหนดชื่อปัจจุบันของคุณ\n  const auditResult = safeParse(\"Final Exam Schedule Auditor\");\n  const finalSchedule = safeParse(\"Exam Conflict Resolver\") || [];\n  \n  // ดึงข้อมูลต้นฉบับ (เช็คความปลอดภัยกรณี Payload ว่างเปล่า)\n  const payloadNode = $(\"Build AI Prompt Payload\").first()?.json || { config: {} };\n\n  // 1. กรณีระบบเชื่อมต่อ AI ไม่สำเร็จ หรือ Auditor ไม่มี Output\n  if (!auditResult || auditResult.error) {\n    return {\n      \"status\": \"error\",\n      \"message\": \"System Audit Failed: Auditor node failed or returned invalid data.\",\n      \"debug\": \"Please check 'Final Exam Schedule Auditor' node for 'fetch failed' errors.\"\n    };\n  }\n\n  // 2. กรณีจัดตารางสอบสำเร็จ (Passed Audit)\n  if (auditResult.isValid === true) {\n    return {\n      \"status\": \"success\",\n      \"message\": \"Exam schedule generated and verified successfully.\",\n      \"metadata\": {\n        \"timestamp\": new Date().toISOString(),\n        \"semester\": payloadNode.config?.semester || \"N/A\",\n        \"academicYear\": payloadNode.config?.academicYear || \"N/A\",\n        \"totalExams\": Array.isArray(finalSchedule) ? finalSchedule.length : 0,\n        \"status\": \"APPROVED\"\n      },\n      \"data\": {\n        \"schedule\": finalSchedule\n      }\n    };\n  }\n\n  // 3. กรณีไม่ผ่านการตรวจสอบ (Failed Audit) - เพิ่มระบบกันพังถ้า .errors ไม่มีอยู่จริง\n  const errorList = Array.isArray(auditResult.errors) ? auditResult.errors : [];\n\n  return {\n    \"status\": \"failed_validation\",\n    \"message\": \"The generated schedule violates exam constraints.\",\n    \"errorSummary\": {\n      \"totalErrors\": auditResult.summary?.totalErrors || errorList.length,\n      \"verdict\": auditResult.status || \"REJECTED\"\n    },\n    \"data\": {\n      \"auditReport\": {\n        \"isValid\": false,\n        \"details\": errorList.map(err => ({\n          \"rule_violated\": err.violatedRule || \"General Constraint\",\n          \"issue\": err.description || \"พบข้อผิดพลาดที่ไม่ระบุสาเหตุ\",\n          \"affected_ids\": err.affectedIds || []\n        }))\n      },\n      \"draftSchedule\": finalSchedule \n    }\n  };\n})()\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3216,
+        288
+      ],
+      "id": "a6848e50-874a-4474-80ec-d30b38bc6460",
+      "name": "Return Final Schedule"
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  // ตรวจสอบข้อมูลนำเข้า\n  if (!args || !args.schedule) return \"ERROR: No schedule provided to tool.\";\n  \n  let schedule = (typeof args.schedule === 'string') ? JSON.parse(args.schedule) : args.schedule;\n  if (!Array.isArray(schedule)) return \"ERROR: Schedule must be a JSON array.\";\n\n  const conflicts = [];\n  for (let i = 0; i < schedule.length; i++) {\n    for (let j = i + 1; j < schedule.length; j++) {\n      const a = schedule[i], b = schedule[j];\n      if (!a.timeStart || !b.timeStart) continue;\n\n      // ตรวจสอบการทับซ้อนของเวลา (Overlap)\n      const overlap = (new Date(a.timeStart) < new Date(b.timeEnd)) && (new Date(b.timeStart) < new Date(a.timeEnd));\n      \n      if (overlap && a.className === b.className && a.courseCode !== b.courseCode) {\n          conflicts.push(`Conflict: Class ${a.className} has exams ${a.courseCode} and ${b.courseCode} at the same time.`);\n      }\n    }\n  }\n\n  return conflicts.length > 0 ? \"Found Conflicts: \" + conflicts.join(\" | \") : \"SUCCESS: No conflicts found.\";\n} catch (e) {\n  return \"SYSTEM_ERROR: \" + e.message;\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        2592,
+        512
+      ],
+      "id": "5c37cae5-d86e-470f-aab1-1d8893394785",
+      "name": "Code Tool"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2240,
+        512
+      ],
+      "id": "a029ff7d-935f-4359-b166-0942de705acb",
+      "name": "Gemini Flash",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "j7L2BcVRQ0T4V0Dw",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=TASK: Group and assign logical time slots for the following exams.\nDATA: {{ JSON.stringify($json.planItems) }}\nCONFIG: {{ JSON.stringify($json.config) }}\n\nINSTRUCTION: \n1. Ensure all items with the same 'courseCode' have identical timing. \n2. Use the earliest dates possible between {{ $json.config.examStart }} and {{ $json.config.examEnd }}.\n3. Output ONLY the raw JSON array.",
+        "options": {
+          "systemMessage": "## ROLE\nYou are a \"Data Strategist\" specializing in exam sequencing and logical grouping for a specific department.\n\n## ⚙️ HARDCODED CONSTRAINTS\n1. **SYNC RULE:** All items sharing the same `courseCode` MUST be scheduled at the exact same Date, `timeStart`, and `timeEnd`. No exceptions allowed.\n\n2. **TIME SLOTS:** Assign exams ONLY within these standard windows:\n   - Morning Session: 08:30 - 12:30 (Must end by 12:30)\n   - Afternoon Session: 13:30 - 16:30 (Must end by 16:30)\n\n3. **LUNCH WALL:** Strictly NO exams are permitted between 12:30 and 13:30.\n\n4. **STUDENT LOAD:** A single student group (`className`) must not have more than 2 exam sessions per day to reduce fatigue.\n\n5. **DATE RANGE:** Schedule all exams within the specific dates provided in the configuration.\n\n6. **CONTINUITY RULE:** Exams within the same day MUST be scheduled continuously without any idle gaps between sessions.\n   - The `timeStart` of an exam MUST be exactly equal to the `timeEnd` of the previous exam on the same day.\n   - The ONLY permitted gap is the official lunch break from 12:30 to 13:30.\n   - Any arbitrary gaps (e.g. 15, 30 minutes) between exams are STRICTLY FORBIDDEN.\n\n## ⛔ RESTRICTIONS\n- Do NOT handle any room assignments (`roomNumber`) in this stage. Focus solely on Date and Time.\n- Do NOT modify or omit any `exam_plan_id` from the original data.\n- Do NOT invent, guess, or assume missing data.\n\n## 📤 OUTPUT FORMAT (RAW JSON ARRAY ONLY)\n[\n  {\n    \"exam_plan_id\": number,\n    \"className\": \"string\",\n    \"departmentName\": \"string\",\n    \"courseCode\": \"string\",\n    \"courseName\": \"string\",\n    \"timeStart\": \"YYYY-MM-DD HH:mm\",\n    \"timeEnd\": \"YYYY-MM-DD HH:mm\",\n    \"duration\": number,\n    \"roomNumber\": number\n  }\n]"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2160,
+        288
+      ],
+      "id": "f390a9d6-e52f-4088-9cde-1e92a389839a",
+      "name": "Exam Time Scheduler"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=TASK: Scan and resolve conflicts for this schedule.\nINPUT_SCHEDULE: {{ $json.output }}\n\nINSTRUCTIONS:\n1. CALL the 'Code Tool' immediately with the INPUT_SCHEDULE.\n2. If conflicts exist:\n   - Reschedule conflicting items to the next valid slot (Morning: 08:30-12:30 or Afternoon: 13:30-16:30).\n   - STRICT: If you change the time for one 'exam_plan_id', you MUST apply the EXACT same change to ALL items with the same 'courseCode'.\n3. OUTPUT: Return ONLY the final JSON array. No conversational text.",
+        "options": {
+          "systemMessage": "## ROLE\nYou are a \"Conflict Resolver\" ensuring no student groups have overlapping exam schedules.\n\n## ⚙️ HARDCODED CONSTRAINTS\n1. **STUDENT OVERLAP:** Verify if the same `className` is assigned to multiple exams at the same time.\n2. **RESOLUTION:** If a conflict is detected, shift the exam with the smaller student count to the next available vacant time slot.\n3. **SYNC PRESERVATION:** If you shift the time for one exam, you MUST automatically shift all other records with the same `courseCode` to maintain synchronization.\n4. **BOUNDARY CHECK:** The rescheduled time must not exceed 16:30 and must not fall within the 12:30 - 13:30 lunch break.\n\n## 📤 OUTPUT FORMAT\nReturn a corrected JSON Array of the exam schedule with all conflicts resolved."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2512,
+        288
+      ],
+      "id": "d12ed469-bf61-4673-a17a-7b4d1aee4140",
+      "name": "Exam Conflict Resolver"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=TASK: Perform Final Audit on the generated schedule.\nGENERATED_DATA: {{ $json.output }}\nORIGINAL_DATA: {{ JSON.stringify($node[\"Build AI Prompt Payload\"].json.planItems) }}\nCONSTRAINTS: {{ JSON.stringify($node[\"Build AI Prompt Payload\"].json.constraints) }}\n\nINSTRUCTION: Be ruthless. If anything is wrong, reject it.",
+        "options": {
+          "systemMessage": "## ROLE\nYou are the \"Chief of Evaluation\". Your mission is to perform a STERN, RUTHLESS AUDIT.\n\n## ⚖️ FINAL AUDIT LOGIC (ZERO TOLERANCE)\n1. **SYNC FAIL:** REJECT if the same `courseCode` is scheduled at different times.\n2. **STUDENT OVERLAP:** REJECT if any student group (`className`) has overlapping exam sessions.\n3. **TIME VIOLATION:** REJECT if any exam ends after 12:30 (Morning), after 16:30 (Afternoon), or exists during the lunch break (12:30-13:30).\n4. **INTEGRITY:** REJECT if any `exam_plan_id` from the original input data is missing.\n\n## 📤 OUTPUT FORMAT (STRICT JSON ONLY)\n{\n  \"isValid\": boolean,\n  \"status\": \"APPROVED | REJECTED\",\n  \"errors\": [\n    {\n      \"violatedRule\": \"string\",\n      \"description\": \"Clear explanation in Thai language regarding which group or subject failed the audit\",\n      \"affectedIds\": [number]\n    }\n  ],\n  \"finalSchedule\": [] \n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2864,
+        288
+      ],
+      "id": "fcbee675-a819-4366-bc39-f82150cfe940",
+      "name": "Final Exam Schedule Auditor"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Query Enrollments": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Rooms": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Query Constraints": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Course Group": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Query Enrollments",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Query Rooms",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Query Constraints",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Query Course Group",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Make Run Key",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make Run Key": {
+      "main": [
+        [
+          {
+            "node": "Attach Run Id",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Insert Exam Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Exam Run": {
+      "main": [
+        [
+          {
+            "node": "Attach Run Id",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Attach Run Id": {
+      "main": [
+        [
+          {
+            "node": "Build Exam Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Exam Candidates": {
+      "main": [
+        [
+          {
+            "node": "Build Time Slots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Time Slots": {
+      "main": [
+        [
+          {
+            "node": "Prepare ExamUnit Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert ExamUnit": {
+      "main": [
+        [
+          {
+            "node": "Insert ExamPlan From ExamUnit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert ExamPlan From ExamUnit": {
+      "main": [
+        [
+          {
+            "node": "Query Plan For AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Plan For AI": {
+      "main": [
+        [
+          {
+            "node": "Build AI Prompt Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare ExamUnit Rows": {
+      "main": [
+        [
+          {
+            "node": "Insert ExamUnit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build AI Prompt Payload": {
+      "main": [
+        [
+          {
+            "node": "Exam Time Scheduler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive Exam Config": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "The Space Optimizer": {
+      "main": [
+        []
+      ]
+    },
+    "Code Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Exam Conflict Resolver",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Flash": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Exam Time Scheduler",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Final Exam Schedule Auditor",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Exam Conflict Resolver",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exam Time Scheduler": {
+      "main": [
+        [
+          {
+            "node": "Exam Conflict Resolver",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exam Conflict Resolver": {
+      "main": [
+        [
+          {
+            "node": "Final Exam Schedule Auditor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final Exam Schedule Auditor": {
+      "main": [
+        [
+          {
+            "node": "Return Final Schedule",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "8ecad7f0-94c0-4374-aaf5-d99beaf95a33",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6b362e31d2b78e999b79a467c1a1dd354e006e2b5bc0efa014847370d4ba0720"
+  },
+  "id": "DS5IuKXSSX6s4tTM",
+  "tags": []
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Calendar, Search, Filter, BookOpen, Clock, MapPin, Hash, Phone, Award, Layers, UserCheck, School, ShieldCheck, Zap } from "lucide-react";
+import { Download, Calendar, Search, Filter, BookOpen, Clock, MapPin, Hash, Phone, Award, Layers, UserCheck, School, ShieldCheck, Workflow } from "lucide-react";
 import ScheduleTable from "../components/ui/ScheduleTable";
 import api from "../services/api";
 import toast from "react-hot-toast";
@@ -204,7 +204,19 @@ const UserDashboard = () => {
             className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 flex items-center gap-6 group hover:border-blue-200 transition-all cursor-default"
           >
             <div className={`w-16 h-16 rounded-3xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform`}>
-              <stat.icon size={28} />
+              <motion.div
+                animate={{
+                  y: [0, -4, 0],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: i * 0.5,
+                }}
+              >
+                <stat.icon size={28} />
+              </motion.div>
             </div>
             <div>
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{stat.label}</p>
@@ -232,12 +244,28 @@ const UserDashboard = () => {
             {loading ? (
             <div className="py-40 text-center">
                 <div className="relative inline-flex mb-8">
-                    <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+                    <motion.div 
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full"
+                    />
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <Zap size={16} className="text-blue-600 animate-pulse" />
+                        <motion.div
+                            animate={{
+                                scale: [1, 1.2, 1],
+                                opacity: [0.5, 1, 0.5],
+                            }}
+                            transition={{
+                                duration: 1.5,
+                                repeat: Infinity,
+                                ease: "easeInOut",
+                            }}
+                        >
+                            <Workflow size={24} className="text-blue-600" />
+                        </motion.div>
                     </div>
                 </div>
-                <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-xs">Synchronizing Schedule...</p>
+                <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-xs">ExamFlow is processing...</p>
             </div>
             ) : schedule.length > 0 ? (
             <div className="p-2 sm:p-6 overflow-hidden">

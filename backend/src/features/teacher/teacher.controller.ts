@@ -8,6 +8,7 @@ import {
   TeacherCreateUpdate,
 } from "../teacher/teacher.schema";
 import { TeacherService } from "../teacher/teacher.service";
+import { DepartmentService } from "../department/department.service";
 
 export namespace TeacherController {
   export const teacherController = new Elysia({ prefix: "/teachers" })
@@ -60,38 +61,11 @@ export namespace TeacherController {
 
           const buffer = await file.arrayBuffer();
           const fileExtension = file.name.split('.').pop()?.toLowerCase();
-          let teachersToCreate: TeacherCreateUpdate[] = [];
-
-          const parseRecords = (records: any[]) => {
-            return records.map(record => {
-              // Helper to find value case-insensitively
-              const getValue = (keys: string[]) => {
-                for (const key of keys) {
-                  if (record[key] !== undefined) return record[key];
-                  // Check lowercase keys
-                  const lowerKey = Object.keys(record).find(k => k.toLowerCase() === key.toLowerCase());
-                  if (lowerKey) return record[lowerKey];
-                }
-                return undefined;
-              };
-
-              const deptIdRaw = getValue(['department_id', 'departmentId', 'dept_id', 'รหัสสาขาวิชา (ID)', 'รหัสสาขาวิชา']);
-              const deptIdVal = typeof deptIdRaw === 'string' ? parseInt(deptIdRaw, 10) : deptIdRaw;
-              
-              if (isNaN(deptIdVal)) return null; // Skip invalid department_id
-
-              return {
-                firstname: getValue(['firstname', 'firstName', 'first_name', 'ชื่อ']) || '',
-                lastname: getValue(['lastname', 'lastName', 'last_name', 'นามสกุล']) || '',
-                department_id: deptIdVal,
-                tel: getValue(['tel', 'telephone', 'mobile', 'เบอร์โทร', 'เบอร์โทรศัพท์']) || '',
-              };
-            }).filter((t): t is TeacherCreateUpdate => t !== null && t.firstname !== '' && t.department_id !== undefined);
-          };
+          let rawRecords: any[] = [];
 
           if (fileExtension === 'csv') {
             const csvString = Buffer.from(buffer).toString('utf8');
-            const records = await new Promise<any[]>((resolve, reject) => {
+            rawRecords = await new Promise<any[]>((resolve, reject) => {
               csvParse(csvString, {
                 columns: true,
                 skip_empty_lines: true
@@ -100,21 +74,60 @@ export namespace TeacherController {
                 else resolve(records);
               });
             });
-            teachersToCreate = parseRecords(records);
           } else if (fileExtension === 'xlsx') {
             const workbook = xlsx.read(buffer, { type: 'array' });
             const sheetName = workbook.SheetNames[0];
             const sheet = workbook.Sheets[sheetName];
-            const json = xlsx.utils.sheet_to_json(sheet);
-            teachersToCreate = parseRecords(json);
+            rawRecords = xlsx.utils.sheet_to_json(sheet);
           } else {
             set.status = "Bad Request";
             return { message: "Unsupported file type. Only CSV and XLSX are supported." };
           }
 
+          const departments = await DepartmentService.findAll({ itemsPerPage: -1 });
+          const teachersToCreate: TeacherCreateUpdate[] = [];
+
+          for (const record of rawRecords) {
+            const getValue = (keys: string[]) => {
+              for (const key of keys) {
+                if (record[key] !== undefined) return record[key];
+                const lowerKey = Object.keys(record).find(k => k.toLowerCase() === key.toLowerCase());
+                if (lowerKey) return record[lowerKey];
+              }
+              return undefined;
+            };
+
+            const deptRaw = getValue(['department_id', 'departmentId', 'dept_id', 'รหัสสาขาวิชา (ID)', 'รหัสสาขาวิชา', 'ชื่อสาขาวิชา', 'สาขาวิชา']);
+            let deptIdVal: number | undefined;
+
+            if (deptRaw) {
+              const deptStr = String(deptRaw).trim();
+              const deptIdNum = parseInt(deptStr, 10);
+              
+              if (!isNaN(deptIdNum)) {
+                const foundDept = departments.data.find(d => d.id === deptIdNum);
+                if (foundDept) deptIdVal = foundDept.id;
+              }
+              
+              if (!deptIdVal) {
+                const foundDeptByName = departments.data.find(d => d.name === deptStr);
+                if (foundDeptByName) deptIdVal = foundDeptByName.id;
+              }
+            }
+
+            if (deptIdVal) {
+              teachersToCreate.push({
+                firstname: getValue(['firstname', 'firstName', 'first_name', 'ชื่อ']) || '',
+                lastname: getValue(['lastname', 'lastName', 'last_name', 'นามสกุล']) || '',
+                department_id: deptIdVal,
+                tel: getValue(['tel', 'telephone', 'mobile', 'เบอร์โทร', 'เบอร์โทรศัพท์']) || '',
+              });
+            }
+          }
+
           if (teachersToCreate.length === 0) {
             set.status = "Bad Request";
-            return { message: "No valid data found in the file." };
+            return { message: "ไม่พบข้อมูลที่ถูกต้องในไฟล์" };
           }
 
           const result = await TeacherService.createMany(teachersToCreate);
@@ -148,7 +161,7 @@ export namespace TeacherController {
         async ({ set }) => {
             try {
                 const worksheet = xlsx.utils.aoa_to_sheet([
-                    ["ชื่อ", "นามสกุล", "เบอร์โทรศัพท์", "รหัสสาขาวิชา (ID)"]
+                    ["ชื่อ", "นามสกุล", "เบอร์โทรศัพท์", "ชื่อสาขาวิชา"]
                 ]);
                 const workbook = xlsx.utils.book_new();
                 xlsx.utils.book_append_sheet(workbook, worksheet, "Teachers");

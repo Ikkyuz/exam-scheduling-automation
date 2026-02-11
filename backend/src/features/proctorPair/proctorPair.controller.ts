@@ -186,7 +186,7 @@ export namespace ProctorPairController {
         async ({ set }) => {
             try {
                 const worksheet = xlsx.utils.aoa_to_sheet([
-                    ["กลุ่ม", "รหัสอาจารย์ (ID)"]
+                    ["กลุ่ม", "ชื่อ-นามสกุลอาจารย์"]
                 ]);
                 const workbook = xlsx.utils.book_new();
                 xlsx.utils.book_append_sheet(workbook, worksheet, "ProctorPairs");

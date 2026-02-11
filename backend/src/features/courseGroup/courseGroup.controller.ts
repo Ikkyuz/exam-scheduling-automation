@@ -216,7 +216,7 @@ export namespace CourseGroupController {
         async ({ set }) => {
             try {
                 const worksheet = xlsx.utils.aoa_to_sheet([
-                    ["กลุ่ม", "รหัสวิชา (ID)"]
+                    ["กลุ่ม", "รหัสวิชา"]
                 ]);
                 const workbook = xlsx.utils.book_new();
                 xlsx.utils.book_append_sheet(workbook, worksheet, "CourseGroups");

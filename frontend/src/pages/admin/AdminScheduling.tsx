@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Settings, Cpu, CheckCircle, AlertCircle, Zap, Download, Filter } from "lucide-react";
+import { Settings, Cpu, CheckCircle, AlertCircle, Workflow, Download, Filter } from "lucide-react";
 import ScheduleTable from "../../components/ui/ScheduleTable"; // Import ScheduleTable
 import { useAuth } from "../../contexts/AuthContext";
 import api from "../../services/api";
@@ -434,7 +434,7 @@ const AdminScheduling: React.FC = () => {
               disabled={status === "processing"}
               className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
             >
-              <Zap className="w-5 h-5 mr-2" />
+              <Workflow className="w-5 h-5 mr-2" />
               {status === "processing"
                 ? "กำลังสร้างตารางสอบ..."
                 : "สร้างตารางสอบ"}

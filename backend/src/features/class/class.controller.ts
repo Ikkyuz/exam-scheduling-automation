@@ -8,6 +8,7 @@ import {
   ClassCreateUpdate,
 } from "./class.schema";
 import { ClassService } from "./class.service";
+import { DepartmentService } from "../department/department.service";
 
 export namespace ClassController {
   export const classController = new Elysia({ prefix: "/class" })
@@ -57,36 +58,77 @@ export namespace ClassController {
 
           const buffer = await file.arrayBuffer();
           const fileExtension = file.name.split(".").pop()?.toLowerCase();
-          let classesToCreate: ClassCreateUpdate[] = [];
+          let rawRecords: any[] = [];
 
-          const parseRecords = (records: any[]) => {
-            return records.map((record) => {
-              const getValue = (keys: string[]) => {
-                for (const key of keys) {
-                  if (record[key] !== undefined) return record[key];
-                  const lowerKey = Object.keys(record).find(k => k.toLowerCase() === key.toLowerCase());
-                  if (lowerKey) return record[lowerKey];
+          if (fileExtension === "csv") {
+            const csvString = Buffer.from(buffer).toString("utf8");
+            rawRecords = await new Promise<any[]>((resolve, reject) => {
+              csvParse(
+                csvString,
+                {
+                  columns: true,
+                  skip_empty_lines: true,
+                },
+                (err, records) => {
+                  if (err) reject(err);
+                  else resolve(records);
                 }
-                return undefined;
-              };
+              );
+            });
+          } else if (fileExtension === "xlsx") {
+            const workbook = xlsx.read(buffer, { type: "array" });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            rawRecords = xlsx.utils.sheet_to_json(sheet);
+          } else {
+            set.status = "Bad Request";
+            return {
+              message:
+                "Unsupported file type. Only CSV and XLSX are supported.",
+            };
+          }
 
-              const deptIdRaw = getValue(['department_id', 'departmentId', 'dept_id', 'รหัสสาขาวิชา (ID)', 'รหัสสาขาวิชา']);
-              const deptIdVal = typeof deptIdRaw === 'string' ? parseInt(deptIdRaw, 10) : deptIdRaw;
+          const departments = await DepartmentService.findAll({ itemsPerPage: -1 });
+          const classesToCreate: ClassCreateUpdate[] = [];
+
+          for (const record of rawRecords) {
+            const getValue = (keys: string[]) => {
+              for (const key of keys) {
+                if (record[key] !== undefined) return record[key];
+                const lowerKey = Object.keys(record).find(k => k.toLowerCase() === key.toLowerCase());
+                if (lowerKey) return record[lowerKey];
+              }
+              return undefined;
+            };
+
+            const deptRaw = getValue(['department_id', 'departmentId', 'dept_id', 'รหัสสาขาวิชา (ID)', 'รหัสสาขาวิชา', 'ชื่อสาขาวิชา', 'สาขาวิชา']);
+            let deptIdVal: number | undefined;
+
+            if (deptRaw) {
+              const deptStr = String(deptRaw).trim();
+              const deptIdNum = parseInt(deptStr, 10);
               
-              const amountRaw = getValue(['amount', 'studentCount', 'count', 'จำนวนผู้เข้าสอบ', 'จำนวน', 'amount (คน)']);
-              let amountVal = 0;
-              if (typeof amountRaw === 'number') {
-                amountVal = amountRaw;
-              } else if (typeof amountRaw === 'string') {
-                amountVal = parseInt(amountRaw.replace(/[^0-9]/g, ''), 10);
+              if (!isNaN(deptIdNum)) {
+                const foundDept = departments.data.find(d => d.id === deptIdNum);
+                if (foundDept) deptIdVal = foundDept.id;
               }
-
-              if (isNaN(deptIdVal)) {
-                console.warn(`Missing or invalid departmentId for record:`, record);
-                return null;
+              
+              if (!deptIdVal) {
+                const foundDeptByName = departments.data.find(d => d.name === deptStr);
+                if (foundDeptByName) deptIdVal = foundDeptByName.id;
               }
+            }
 
-              return {
+            const amountRaw = getValue(['amount', 'studentCount', 'count', 'จำนวนผู้เข้าสอบ', 'จำนวน', 'amount (คน)']);
+            let amountVal = 0;
+            if (typeof amountRaw === 'number') {
+              amountVal = amountRaw;
+            } else if (typeof amountRaw === 'string') {
+              amountVal = parseInt(amountRaw.replace(/[^0-9]/g, ''), 10);
+            }
+
+            if (deptIdVal) {
+              classesToCreate.push({
                 name: getValue(['name', 'className', 'class_name', 'ชื่อชั้นเรียน']) || '',
                 level: (getValue(['level', 'classLevel', 'ระดับชั้น', 'ระดับ']) || 'ปวช').toUpperCase(),
                 classYear: (() => {
@@ -103,43 +145,13 @@ export namespace ClassController {
                 })(),
                 department_id: deptIdVal,
                 amount: isNaN(amountVal) ? 0 : amountVal,
-              };
-            }).filter((c) => c !== null && c.name !== '' && c.department_id !== undefined) as ClassCreateUpdate[];
-          };
-
-          if (fileExtension === "csv") {
-            const csvString = Buffer.from(buffer).toString("utf8");
-            const records = await new Promise<any[]>((resolve, reject) => {
-              csvParse(
-                csvString,
-                {
-                  columns: true,
-                  skip_empty_lines: true,
-                },
-                (err, records) => {
-                  if (err) reject(err);
-                  else resolve(records);
-                }
-              );
-            });
-            classesToCreate = parseRecords(records);
-          } else if (fileExtension === "xlsx") {
-            const workbook = xlsx.read(buffer, { type: "array" });
-            const sheetName = workbook.SheetNames[0];
-            const sheet = workbook.Sheets[sheetName];
-            const json = xlsx.utils.sheet_to_json(sheet);
-            classesToCreate = parseRecords(json);
-          } else {
-            set.status = "Bad Request";
-            return {
-              message:
-                "Unsupported file type. Only CSV and XLSX are supported.",
-            };
+              });
+            }
           }
 
           if (classesToCreate.length === 0) {
             set.status = "Bad Request";
-            return { message: "No valid data found in the file." };
+            return { message: "ไม่พบข้อมูลที่ถูกต้องในไฟล์" };
           }
 
           const result = await ClassService.createMany(classesToCreate);
@@ -176,7 +188,7 @@ export namespace ClassController {
         async ({ set }) => {
             try {
                 const worksheet = xlsx.utils.aoa_to_sheet([
-                    ["ชื่อชั้นเรียน", "ระดับชั้น", "ชั้นปี/ห้อง", "รหัสสาขาวิชา (ID)", "จำนวนผู้เข้าสอบ"]
+                    ["ชื่อชั้นเรียน", "ระดับชั้น", "ชั้นปี/ห้อง", "ชื่อสาขาวิชา", "จำนวนผู้เข้าสอบ"]
                 ]);
                 const workbook = xlsx.utils.book_new();
                 xlsx.utils.book_append_sheet(workbook, worksheet, "Classes");

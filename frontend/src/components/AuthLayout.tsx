@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Workflow } from "lucide-react";
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -102,7 +102,7 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
                   className="absolute inset-0 bg-gradient-to-r from-indigo-200 via-purple-200 to-pink-200 rounded-2xl blur-xl opacity-70"
                 />
                 <div className="relative bg-gradient-to-br from-indigo-100 to-purple-100 p-4 rounded-2xl shadow-2xl">
-                  <Sparkles className="h-12 w-12 text-indigo-600" />
+                  <Workflow className="h-12 w-12 text-indigo-600" />
                 </div>
               </div>
             </motion.div>
