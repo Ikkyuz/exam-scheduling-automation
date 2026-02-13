@@ -10,8 +10,12 @@ import {
 import { ClassService } from "./class.service";
 import { DepartmentService } from "../department/department.service";
 
+import { authMiddleware } from "../../shared/middleware/auth";
+import { Role } from "@/providers/database/generated/enums";
+
 export namespace ClassController {
   export const classController = new Elysia({ prefix: "/class" })
+    .use(authMiddleware)
     .post(
       "/",
       async ({ body, set }) => {
@@ -44,6 +48,7 @@ export namespace ClassController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Classes"],
+        role: Role.ADMIN,
       }
     )
     .post(
@@ -171,6 +176,7 @@ export namespace ClassController {
         body: t.Object({
           file: t.File(),
         }),
+        role: Role.ADMIN,
         response: {
           201: t.Object({
             data: t.Array(ClassWithRelationsSchema),
@@ -205,6 +211,7 @@ export namespace ClassController {
         },
         {
             tags: ["Classes"],
+            isLoggedIn: true,
         }
     )
     .get(
@@ -267,6 +274,7 @@ export namespace ClassController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Classes"],
+        isLoggedIn: true,
       }
     )
     .get(
@@ -287,6 +295,7 @@ export namespace ClassController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Classes"],
+        isLoggedIn: true,
       }
     )
 
@@ -309,6 +318,7 @@ export namespace ClassController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Classes"],
+        isLoggedIn: true,
       }
     )
 
@@ -333,6 +343,7 @@ export namespace ClassController {
           500: t.String(),
         },
         tags: ["Classes"],
+        role: Role.ADMIN,
       }
     )
 
@@ -355,6 +366,7 @@ export namespace ClassController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Classes"],
+        role: Role.ADMIN,
       }
     )
 
@@ -384,6 +396,8 @@ export namespace ClassController {
           500: t.String(),
         },
         tags: ["Classes"],
+        role: Role.ADMIN,
       }
     );
 }
+

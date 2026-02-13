@@ -3,8 +3,12 @@ import { ExamPlanService } from "./examPlan.service";
 import { ExamPlanBulkCreate, ExamPlanSchema, ExamPlanBulkCreateSchema } from "./examPlan.schema";
 import { generateSchedulePDF } from "@/shared/utils/pdf-generator";
 
+import { authMiddleware } from "../../shared/middleware/auth";
+import { Role } from "@/providers/database/generated/enums";
+
 export namespace ExamPlanController {
   export const examPlanController = new Elysia({ prefix: "/exam-plans" })
+    .use(authMiddleware)
     .post("/bulk-create", async (ctx) => {
       const data = ctx.body as ExamPlanBulkCreate[];
       await ExamPlanService.bulkCreate(data);
@@ -17,6 +21,7 @@ export namespace ExamPlanController {
         500: t.Object({ message: t.String() }),
       },
       tags: ["ExamPlans"],
+      role: Role.ADMIN,
     }
   )
     .get("/", async (ctx) => {
@@ -44,6 +49,7 @@ export namespace ExamPlanController {
         500: t.Object({ message: t.String() }),
       },
       tags: ["ExamPlans"],
+      isLoggedIn: true,
     }
   )
     .get("/exam/pdf", async ({ query, set }) => {
@@ -74,6 +80,7 @@ export namespace ExamPlanController {
         500: t.Object({ message: t.String(), error: t.String() }),
       },
       tags: ["ExamPlans"],
+      isLoggedIn: true,
     })
     .delete("/clear", async (ctx) => {
       const { semester, academicYear } = ctx.query;
@@ -95,5 +102,7 @@ export namespace ExamPlanController {
         500: t.Object({ message: t.String() }),
       },
       tags: ["ExamPlans"],
+      role: Role.ADMIN,
     })
 }
+

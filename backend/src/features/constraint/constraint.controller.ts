@@ -9,8 +9,12 @@ import {
 } from "./constraint.schema";
 import { ConstraintService } from "./constraint.service";
 
+import { authMiddleware } from "../../shared/middleware/auth";
+import { Role } from "@/providers/database/generated/enums";
+
 export namespace ConstraintController {
   export const constraintController = new Elysia({ prefix: "/constraint" })
+    .use(authMiddleware)
     .post(
       "/",
       async ({ body, set }) => {
@@ -41,6 +45,7 @@ export namespace ConstraintController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Constraints"],
+        role: Role.ADMIN,
       }
     )
     .post(
@@ -138,6 +143,7 @@ export namespace ConstraintController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Constraints"],
+        role: Role.ADMIN,
       }
     )
 
@@ -163,6 +169,7 @@ export namespace ConstraintController {
         },
         {
             tags: ["Constraints"],
+            isLoggedIn: true,
         }
     )
     .get(
@@ -214,6 +221,7 @@ export namespace ConstraintController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Constraints"],
+        isLoggedIn: true,
       }
     )
     .get(
@@ -242,6 +250,7 @@ export namespace ConstraintController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Constraints"],
+        isLoggedIn: true,
       }
     )
     .patch(
@@ -277,6 +286,7 @@ export namespace ConstraintController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Constraints"],
+        role: Role.ADMIN,
       }
     )
 
@@ -299,6 +309,7 @@ export namespace ConstraintController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Constraints"],
+        role: Role.ADMIN,
       }
     )
 
@@ -324,6 +335,8 @@ export namespace ConstraintController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Constraints"],
+        role: Role.ADMIN,
       }
     );
 }
+

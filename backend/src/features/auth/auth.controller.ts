@@ -3,6 +3,8 @@ import { UserService } from "../user/user.service";
 import { TokenService } from "../token/token.service";
 import { jwt } from "@elysiajs/jwt";
 
+import { authMiddleware } from "../../shared/middleware/auth";
+
 export namespace AuthController {
   const jwtPlugin = {
     name: 'jwt',
@@ -11,6 +13,7 @@ export namespace AuthController {
 
   export const authController = new Elysia({ prefix: "/auth" })
     .use(jwt(jwtPlugin))
+    .use(authMiddleware)
     .post(
       "/login",
       async ({ body, set, jwt: jwtHandler }) => {
@@ -151,6 +154,7 @@ export namespace AuthController {
         detail: {
           security: [{ bearerAuth: [] }],
         },
+        isLoggedIn: true,
       }
     )
     .post(
@@ -177,14 +181,11 @@ export namespace AuthController {
           200: t.Object({
             message: t.String()
           }),
-          400: t.Object({
-            message: t.String()
-          }),
-          500: t.Object({
-            message: t.String()
-          })
+          400: t.Object({ message: t.String() }),
+          500: t.Object({ message: t.String() })
         },
-        tags: ["Authentication"]
+        tags: ["Authentication"],
+        isLoggedIn: true,
       }
     );
 }

@@ -3,8 +3,12 @@ import { ScheduleService } from "./schedule.service";
 import { ScheduleBulkCreate, ScheduleSchema, ScheduleBulkCreateSchema } from "./schedule.schema";
 import { generateSchedulePDF } from "@/shared/utils/pdf-generator";
 
+import { authMiddleware } from "../../shared/middleware/auth";
+import { Role } from "@/providers/database/generated/enums";
+
 export namespace ScheduleController {
   export const scheduleController = new Elysia({ prefix: "/schedules" })
+    .use(authMiddleware)
     .post("/bulk-create", async (ctx) => {
       const data = ctx.body as ScheduleBulkCreate[];
       await ScheduleService.bulkCreate(data);
@@ -17,6 +21,7 @@ export namespace ScheduleController {
         500: t.Object({ message: t.String() }),
       },
       tags: ["Schedules"],
+      role: Role.ADMIN,
     }
   )
     .get("/generate", async (ctx) => {
@@ -34,6 +39,7 @@ export namespace ScheduleController {
         500: t.Object({ message: t.String() }),
       },
       tags: ["Schedules"],
+      isLoggedIn: true,
     }
   )
     .get("/", async (ctx) => {
@@ -51,6 +57,7 @@ export namespace ScheduleController {
         500: t.Object({ message: t.String() }),
       },
       tags: ["Schedules"],
+      isLoggedIn: true,
     }
   )
     .get("/exam/pdf", async ({ query, set }) => {
@@ -81,6 +88,7 @@ export namespace ScheduleController {
         500: t.Object({ message: t.String(), error: t.String() }),
       },
       tags: ["Schedules"],
+      isLoggedIn: true,
     })
     .delete("/clear", async (ctx) => {
       const { semester, academicYear } = ctx.query;
@@ -103,5 +111,7 @@ export namespace ScheduleController {
         500: t.Object({ message: t.String() }),
       },
       tags: ["Schedules"],
+      role: Role.ADMIN,
     })
 }
+

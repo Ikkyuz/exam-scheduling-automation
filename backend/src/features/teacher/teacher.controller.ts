@@ -10,8 +10,12 @@ import {
 import { TeacherService } from "../teacher/teacher.service";
 import { DepartmentService } from "../department/department.service";
 
+import { authMiddleware } from "../../shared/middleware/auth";
+import { Role } from "@/providers/database/generated/enums";
+
 export namespace TeacherController {
   export const teacherController = new Elysia({ prefix: "/teachers" })
+    .use(authMiddleware)
     .post(
       "/",
       async ({ body, set }) => {
@@ -47,6 +51,7 @@ export namespace TeacherController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Teachers"],
+        role: Role.ADMIN,
       }
     )
     .post(
@@ -153,6 +158,7 @@ export namespace TeacherController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Teachers"],
+        role: Role.ADMIN,
       }
     )
 
@@ -178,6 +184,7 @@ export namespace TeacherController {
         },
         {
             tags: ["Teachers"],
+            isLoggedIn: true,
         }
     )
     .get(
@@ -229,6 +236,7 @@ export namespace TeacherController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Teachers"],
+        isLoggedIn: true,
       }
     )
     .get(
@@ -249,6 +257,7 @@ export namespace TeacherController {
                 500: t.Object({ message: t.String() }),
             },
             tags: ["Teachers"],
+            isLoggedIn: true,
         }
     )
     .get(
@@ -269,6 +278,7 @@ export namespace TeacherController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Teachers"],
+        isLoggedIn: true,
       }
     )
     .patch(
@@ -304,6 +314,7 @@ export namespace TeacherController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Teachers"],
+        role: Role.ADMIN,
       }
     )
     .delete(
@@ -326,6 +337,7 @@ export namespace TeacherController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Teachers"],
+        role: Role.ADMIN,
       }
     )
     .delete(
@@ -359,6 +371,7 @@ export namespace TeacherController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Teachers"],
+        role: Role.ADMIN,
       }
     );
 }

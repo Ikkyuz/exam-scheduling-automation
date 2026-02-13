@@ -9,8 +9,12 @@ import {
 } from "./proctorPair.schema";
 import { ProctorPairService } from "./proctorPair.service";
 
+import { authMiddleware } from "../../shared/middleware/auth";
+import { Role } from "@/providers/database/generated/enums";
+
 export namespace ProctorPairController {
   export const proctorPairController = new Elysia({ prefix: "/proctorPairs" })
+    .use(authMiddleware)
     .post(
       "/",
       async ({ body, set }) => {
@@ -41,6 +45,7 @@ export namespace ProctorPairController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["ProctorPairs"],
+        role: Role.ADMIN,
       }
     )
     .post(
@@ -178,6 +183,7 @@ export namespace ProctorPairController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["ProctorPairs"],
+        role: Role.ADMIN,
       }
     )
 
@@ -203,6 +209,7 @@ export namespace ProctorPairController {
         },
         {
             tags: ["ProctorPairs"],
+            isLoggedIn: true,
         }
     )
     .get(
@@ -254,6 +261,7 @@ export namespace ProctorPairController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["ProctorPairs"],
+        isLoggedIn: true,
       }
     )
     .get(
@@ -274,6 +282,7 @@ export namespace ProctorPairController {
                 500: t.Object({ message: t.String() }),
             },
             tags: ["ProctorPairs"],
+            isLoggedIn: true,
         }
     )
 
@@ -296,6 +305,7 @@ export namespace ProctorPairController {
           500: t.String(),
         },
         tags: ["ProctorPairs"],
+        isLoggedIn: true,
       }
     )
 
@@ -333,6 +343,7 @@ export namespace ProctorPairController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["ProctorPairs"],
+        role: Role.ADMIN,
       }
     )
 
@@ -357,6 +368,7 @@ export namespace ProctorPairController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["ProctorPairs"],
+        role: Role.ADMIN,
       }
     )
 
@@ -388,6 +400,7 @@ export namespace ProctorPairController {
           500: t.String(),
         },
         tags: ["ProctorPairs"],
+        role: Role.ADMIN,
       }
     );
 }

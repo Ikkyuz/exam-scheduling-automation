@@ -1,10 +1,14 @@
 import Elysia, { t } from "elysia";
 import { TokenService } from "./token.service";
 
+import { authMiddleware } from "../../shared/middleware/auth";
+import { Role } from "@/providers/database/generated/enums";
+
 import { createTokenSchema } from "./token.schema";
 
 export namespace TokenController {
   export const tokenController = new Elysia({ prefix: "/tokens" })
+    .use(authMiddleware)
     .post(
       "/generate",
       async ({ body, set }) => {
@@ -24,6 +28,7 @@ export namespace TokenController {
           expiresIn: t.Optional(t.Number()),
         }),
         tags: ["Token"],
+        role: Role.ADMIN,
       }
     )
     .get(
@@ -40,6 +45,7 @@ export namespace TokenController {
       },
       {
         tags: ["Token"],
+        isLoggedIn: true,
       }
     )
     .get(
@@ -60,6 +66,7 @@ export namespace TokenController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Token"],
+        role: Role.ADMIN,
       }
     )
     .delete(
@@ -76,6 +83,7 @@ export namespace TokenController {
       },
       {
         tags: ["Token"],
+        role: Role.ADMIN,
       }
     )
     .delete(
@@ -92,6 +100,7 @@ export namespace TokenController {
       },
       {
         tags: ["Token"],
+        role: Role.ADMIN,
       }
     )
     .delete(
@@ -107,6 +116,7 @@ export namespace TokenController {
       },
       {
         tags: ["Token"],
+        role: Role.ADMIN,
       }
     );
 }

@@ -15,6 +15,8 @@ import { ConstraintController } from "./constraint/constraint.controller";
 import { ScheduleController } from "./schedule/schedule.controller";
 import { ExamPlanController } from "./examPlan/examPlan.controller";
 
+import { authMiddleware } from "../shared/middleware/auth";
+
 export const app = () =>
   new Elysia()
     .onError(({ code, error, set, request }) => {
@@ -43,6 +45,7 @@ export const app = () =>
       };
     })
     .group("/api", (app) => {
+      app.use(authMiddleware);
       app.use(AuthController.authController);
       app.use(ClassController.classController);
       app.use(ConstraintController.constraintController);

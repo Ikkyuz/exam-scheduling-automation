@@ -9,8 +9,12 @@ import {
 } from "../course/course.schema";
 import { CourseService } from "../course/course.service";
 
+import { authMiddleware } from "../../shared/middleware/auth";
+import { Role } from "@/providers/database/generated/enums";
+
 export namespace CourseController {
   export const courseController = new Elysia({ prefix: "/courses" })
+    .use(authMiddleware)
     .post(
       "/",
       async ({ body, set }) => {
@@ -41,6 +45,7 @@ export namespace CourseController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Courses"],
+        role: Role.ADMIN,
       }
     )
     .post(
@@ -138,6 +143,7 @@ export namespace CourseController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Courses"],
+        role: Role.ADMIN,
       }
     )
 
@@ -163,6 +169,7 @@ export namespace CourseController {
         },
         {
             tags: ["Courses"],
+            isLoggedIn: true,
         }
     )
     .get(
@@ -214,6 +221,7 @@ export namespace CourseController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Courses"],
+        isLoggedIn: true,
       }
     )
     .get(
@@ -234,6 +242,7 @@ export namespace CourseController {
                 500: t.Object({ message: t.String() }),
             },
             tags: ["Courses"],
+            isLoggedIn: true,
         }
     )
     .get(
@@ -255,6 +264,7 @@ export namespace CourseController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Courses"],
+        isLoggedIn: true,
       }
     )
     .patch(
@@ -288,6 +298,7 @@ export namespace CourseController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Courses"],
+        role: Role.ADMIN,
       }
     )
     .delete(
@@ -308,6 +319,7 @@ export namespace CourseController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Courses"],
+        role: Role.ADMIN,
       }
     )
     .delete(
@@ -341,6 +353,8 @@ export namespace CourseController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Courses"],
+        role: Role.ADMIN,
       }
     );
 }
+

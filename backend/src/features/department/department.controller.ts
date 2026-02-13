@@ -9,8 +9,12 @@ import {
 } from "./department.schema";
 import { DepartmentService } from "./department.service";
 
+import { authMiddleware } from "../../shared/middleware/auth";
+import { Role } from "@/providers/database/generated/enums";
+
 export namespace DepartmentController {
   export const departmentController = new Elysia({ prefix: "/departments" })
+    .use(authMiddleware)
     .post(
       "/",
       async ({ body, set }) => {
@@ -41,6 +45,7 @@ export namespace DepartmentController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Departments"],
+        role: Role.ADMIN,
       }
     )
     .post(
@@ -125,6 +130,7 @@ export namespace DepartmentController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Departments"],
+        role: Role.ADMIN,
       }
     )
 
@@ -150,6 +156,7 @@ export namespace DepartmentController {
         },
         {
             tags: ["Departments"],
+            isLoggedIn: true,
         }
     )
     .get(
@@ -201,6 +208,7 @@ export namespace DepartmentController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Departments"],
+        isLoggedIn: true,
       }
     )
     .get(
@@ -221,6 +229,7 @@ export namespace DepartmentController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Departments"],
+        isLoggedIn: true,
       }
     )
     .patch(
@@ -257,6 +266,7 @@ export namespace DepartmentController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Departments"],
+        role: Role.ADMIN,
       }
     )
     .delete(
@@ -281,6 +291,7 @@ export namespace DepartmentController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Departments"],
+        role: Role.ADMIN,
       }
     )
     .delete(
@@ -317,6 +328,8 @@ export namespace DepartmentController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Departments"],
+        role: Role.ADMIN,
       }
     );
 }
+

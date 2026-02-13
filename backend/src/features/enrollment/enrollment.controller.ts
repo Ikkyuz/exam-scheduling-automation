@@ -9,8 +9,12 @@ import {
 } from "./enrollment.schema";
 import { EnrollmentService } from "./enrollment.service";
 
+import { authMiddleware } from "../../shared/middleware/auth";
+import { Role } from "@/providers/database/generated/enums";
+
 export namespace EnrollmentController {
   export const enrollmentController = new Elysia({ prefix: "/enrollments" })
+    .use(authMiddleware)
     .post(
       "/",
       async ({ body, set }) => {
@@ -41,6 +45,7 @@ export namespace EnrollmentController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Enrollments"],
+        role: Role.ADMIN,
       }
     )
     .post(
@@ -173,6 +178,7 @@ export namespace EnrollmentController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Enrollments"],
+        role: Role.ADMIN,
       }
     )
 
@@ -198,6 +204,7 @@ export namespace EnrollmentController {
         },
         {
             tags: ["Enrollments"],
+            isLoggedIn: true,
         }
     )
     .get(
@@ -249,6 +256,7 @@ export namespace EnrollmentController {
           500: t.String(),
         },
         tags: ["Enrollments"],
+        isLoggedIn: true,
       }
     )
 
@@ -271,6 +279,7 @@ export namespace EnrollmentController {
           500: t.String(),
         },
         tags: ["Enrollments"],
+        isLoggedIn: true,
       }
     )
 
@@ -308,6 +317,7 @@ export namespace EnrollmentController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Enrollments"],
+        role: Role.ADMIN,
       }
     )
 
@@ -332,6 +342,7 @@ export namespace EnrollmentController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Enrollments"],
+        role: Role.ADMIN,
       }
     )
 
@@ -363,6 +374,7 @@ export namespace EnrollmentController {
           500: t.String(),
         },
         tags: ["Enrollments"],
+        role: Role.ADMIN,
       }
     );
 }

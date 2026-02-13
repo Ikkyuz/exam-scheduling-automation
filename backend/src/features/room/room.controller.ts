@@ -5,8 +5,12 @@ import { Buffer } from 'buffer'; // Explicitly import Buffer
 import { RoomSchema, RoomCreateUpdateSchema, RoomCreateUpdate } from "./room.schema";
 import { RoomService } from "./room.service";
 
+import { authMiddleware } from "../../shared/middleware/auth";
+import { Role } from "@/providers/database/generated/enums";
+
 export namespace RoomController {
   export const roomController = new Elysia({ prefix: "/rooms" })
+    .use(authMiddleware)
     .post(
       "/",
       async ({ body, set }) => {
@@ -37,6 +41,7 @@ export namespace RoomController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Rooms"],
+        role: Role.ADMIN,
       }
     )
     .post(
@@ -138,6 +143,7 @@ export namespace RoomController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Rooms"],
+        role: Role.ADMIN,
       }
     )
 
@@ -163,6 +169,7 @@ export namespace RoomController {
         },
         {
             tags: ["Rooms"],
+            isLoggedIn: true,
         }
     )
     .get(
@@ -214,6 +221,7 @@ export namespace RoomController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Rooms"],
+        isLoggedIn: true,
       }
     )
     .get(
@@ -235,6 +243,7 @@ export namespace RoomController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Rooms"],
+        isLoggedIn: true,
       }
     )
     .patch(
@@ -268,6 +277,7 @@ export namespace RoomController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Rooms"],
+        role: Role.ADMIN,
       }
     )
     .delete(
@@ -288,6 +298,7 @@ export namespace RoomController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Rooms"],
+        role: Role.ADMIN,
       }
     )
     .delete(
@@ -321,6 +332,7 @@ export namespace RoomController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Rooms"],
+        role: Role.ADMIN,
       }
     );
 }

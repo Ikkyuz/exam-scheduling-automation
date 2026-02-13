@@ -9,8 +9,12 @@ import {
 } from "./courseGroup.schema";
 import { CourseGroupService } from "./courseGroup.service";
 
+import { authMiddleware } from "../../shared/middleware/auth";
+import { Role } from "@/providers/database/generated/enums";
+
 export namespace CourseGroupController {
   export const courseGroupController = new Elysia({ prefix: "/courseGroups" })
+    .use(authMiddleware)
     .post(
       "/",
       async ({ body, set }) => {
@@ -41,6 +45,7 @@ export namespace CourseGroupController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["CourseGroups"],
+        role: Role.ADMIN,
       }
     )
     .post(
@@ -208,6 +213,7 @@ export namespace CourseGroupController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["CourseGroups"],
+        role: Role.ADMIN,
       }
     )
 
@@ -233,6 +239,7 @@ export namespace CourseGroupController {
         },
         {
             tags: ["CourseGroups"],
+            isLoggedIn: true,
         }
     )
     .get(
@@ -284,6 +291,7 @@ export namespace CourseGroupController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["CourseGroups"],
+        isLoggedIn: true,
       }
     )
     .get(
@@ -304,6 +312,7 @@ export namespace CourseGroupController {
                 500: t.Object({ message: t.String() }),
             },
             tags: ["CourseGroups"],
+            isLoggedIn: true,
         }
     )
 
@@ -326,6 +335,7 @@ export namespace CourseGroupController {
           500: t.String(),
         },
         tags: ["CourseGroups"],
+        isLoggedIn: true,
       }
     )
 
@@ -363,6 +373,7 @@ export namespace CourseGroupController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["CourseGroups"],
+        role: Role.ADMIN,
       }
     )
 
@@ -387,6 +398,7 @@ export namespace CourseGroupController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["CourseGroups"],
+        role: Role.ADMIN,
       }
     )
 
@@ -418,6 +430,7 @@ export namespace CourseGroupController {
           500: t.String(),
         },
         tags: ["CourseGroups"],
+        role: Role.ADMIN,
       }
     );
 }

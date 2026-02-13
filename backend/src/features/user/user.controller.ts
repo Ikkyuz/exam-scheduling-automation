@@ -10,8 +10,12 @@ import {
 } from "./user.schema";
 import { UserService } from "./user.service";
 
+import { authMiddleware } from "../../shared/middleware/auth";
+import { Role } from "@/providers/database/generated/enums";
+
 export namespace UserController {
   export const userController = new Elysia({ prefix: "/users" })
+    .use(authMiddleware)
     .post(
       "/",
       async ({ body, set }) => {
@@ -53,6 +57,7 @@ export namespace UserController {
           500: t.String(),
         },
         tags: ["Users"],
+        role: Role.ADMIN,
       }
     )
     .post(
@@ -141,6 +146,7 @@ export namespace UserController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Users"],
+        role: Role.ADMIN,
       }
     )
     .get(
@@ -165,6 +171,7 @@ export namespace UserController {
         },
         {
             tags: ["Users"],
+            role: Role.ADMIN,
         }
     )
     .get(
@@ -205,6 +212,7 @@ export namespace UserController {
           500: t.String(),
         },
         tags: ["Users"],
+        role: Role.ADMIN,
       }
     )
     .get(
@@ -227,6 +235,7 @@ export namespace UserController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Users"],
+        role: Role.ADMIN,
       }
     )
     .patch(
@@ -262,6 +271,7 @@ export namespace UserController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Users"],
+        role: Role.ADMIN,
       }
     )
     .delete(
@@ -288,6 +298,7 @@ export namespace UserController {
           500: t.Object({ message: t.String() }),
         },
         tags: ["Users"],
+        role: Role.ADMIN,
       }
     );
 }
