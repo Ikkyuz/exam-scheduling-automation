@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Calendar, Search, Filter, BookOpen, Clock, MapPin, Hash, Phone, Award, Layers, UserCheck, School, ShieldCheck, Workflow } from "lucide-react";
+import { Download, Calendar, BookOpen, School, ShieldCheck, Workflow } from "lucide-react";
 import ScheduleTable from "../components/ui/ScheduleTable";
 import api from "../services/api";
 import toast from "react-hot-toast";
@@ -12,6 +12,7 @@ interface ScheduleResult {
   timeStart: string;
   timeEnd: string;
   duration: number;
+  courseId?: string;
   courseCode: string;
   courseName: string;
   roomNumber: string;

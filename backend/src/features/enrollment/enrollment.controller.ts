@@ -97,8 +97,8 @@ export namespace EnrollmentController {
           const sampleRecord = records[0];
           const recordKeys = Object.keys(sampleRecord);
           
-          const classKeys = ['class', 'class_id', 'classid', 'ชั้นเรียน', 'ห้องเรียน', 'กลุ่มเรียน', 'รหัสชั้นเรียน'];
-          const courseKeys = ['course', 'course_id', 'courseid', 'วิชา', 'รหัสวิชา', 'รหัสวิชา (id)'];
+          const classKeys = ['class', 'class_id', 'classid', 'ชั้นเรียน', 'ชื่อชั้นเรียน', 'ห้องเรียน', 'กลุ่มเรียน', 'รหัสชั้นเรียน'];
+          const courseKeys = ['course', 'course_id', 'courseid', 'วิชา', 'รหัสวิชา', 'ชื่อวิชา', 'รหัสวิชา/ชื่อวิชา', 'รหัสวิชา (id)'];
 
           const classKeyFound = recordKeys.find(key => classKeys.includes(key.toLowerCase().trim()));
           const courseKeyFound = recordKeys.find(key => courseKeys.includes(key.toLowerCase().trim()));
@@ -138,6 +138,10 @@ export namespace EnrollmentController {
             if (!courseIdValue) {
                 const foundCourseByCode = allCourses.find(c => c.code === courseStr);
                 if (foundCourseByCode) courseIdValue = foundCourseByCode.id;
+            }
+            if (!courseIdValue) {
+                const foundCourseByName = allCourses.find(c => c.name === courseStr);
+                if (foundCourseByName) courseIdValue = foundCourseByName.id;
             }
 
             if (classIdValue && courseIdValue) {
@@ -187,7 +191,7 @@ export namespace EnrollmentController {
         async ({ set }) => {
             try {
                 const worksheet = xlsx.utils.aoa_to_sheet([
-                    ["ชื่อชั้นเรียน", "รหัสวิชา"]
+                    ["ชื่อชั้นเรียน", "รหัสวิชา/ชื่อวิชา"]
                 ]);
                 const workbook = xlsx.utils.book_new();
                 xlsx.utils.book_append_sheet(workbook, worksheet, "Enrollments");

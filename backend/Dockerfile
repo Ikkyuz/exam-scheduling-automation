@@ -11,7 +11,8 @@ RUN bun run build
 FROM oven/bun:1 AS app
 WORKDIR /app
 COPY ./package.json ./
-RUN bun i
+RUN bun i --production
 COPY --from=builder /app/dist /app/dist
 COPY --from=builder /app/src/providers/database/generated /app/src/providers/database/generated
-CMD [ "bun", "dev" ]
+EXPOSE 3000
+CMD [ "bun", "run", "dist/index.js" ]

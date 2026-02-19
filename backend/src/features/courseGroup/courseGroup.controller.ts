@@ -167,6 +167,13 @@ export namespace CourseGroupController {
                 courseIdValue = foundByCode.id;
                 break;
               }
+
+              // ตรวจสอบว่าเป็น Name หรือไม่
+              const foundByName = allCourses.find(c => c.name === strVal);
+              if (foundByName) {
+                courseIdValue = foundByName.id;
+                break;
+              }
             }
 
             if (courseIdValue) {
@@ -222,7 +229,7 @@ export namespace CourseGroupController {
         async ({ set }) => {
             try {
                 const worksheet = xlsx.utils.aoa_to_sheet([
-                    ["กลุ่ม", "รหัสวิชา"]
+                    ["กลุ่ม", "รหัสวิชา/ชื่อวิชา"]
                 ]);
                 const workbook = xlsx.utils.book_new();
                 xlsx.utils.book_append_sheet(workbook, worksheet, "CourseGroups");

@@ -128,7 +128,7 @@ export namespace EnrollmentRepository {
 
   export async function getAllCourses() {
     return await prisma.course.findMany({
-      select: { id: true, code: true }
+      select: { id: true, code: true, name: true }
     });
   }
 

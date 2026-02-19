@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Settings, Cpu, CheckCircle, AlertCircle, Workflow, Download, Filter } from "lucide-react";
 import ScheduleTable from "../../components/ui/ScheduleTable"; // Import ScheduleTable
@@ -43,7 +42,6 @@ interface ValidationResult {
 type SchedulingStatus = "idle" | "processing" | "success" | "error";
 
 const AdminScheduling: React.FC = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const WEBHOOK_URL = import.meta.env.VITE_WEBHOOK_URL;
 

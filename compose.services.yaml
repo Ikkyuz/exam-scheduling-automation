@@ -1,4 +1,41 @@
 services:
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - 5173:80
+    env_file:
+      - ./frontend/.env
+    environment:
+      - VITE_WEBHOOK_URL=http://localhost:5678/webhook-test/schedule-exams
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  backend:
+    container_name: backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    env_file:
+      - ./backend/.env
+    environment:
+      - DATABASE_URL=postgresql://postgres:mysecretpassword@database:5432/exam-scheduling
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://localhost:3000/health').then(r => r.ok ? process.exit(0) : process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   postgres:
     container_name: database
     image: postgres
@@ -33,6 +70,8 @@ services:
       - ./n8n_data:/home/node/.n8n
 
 volumes:
+  frontend_data:
+  backend_data:
   db_data:
   n8n_data:
 

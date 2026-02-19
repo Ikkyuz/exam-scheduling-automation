@@ -16,16 +16,11 @@ import AdminCourseGroups from './pages/admin/AdminCourseGroups';
 import AdminRooms from './pages/admin/AdminRooms';
 import AdminInstructors from './pages/admin/AdminInstructors';
 import AdminEnrollments from './pages/admin/AdminEnrollments';
-import AdminProctorPairs from './pages/admin/AdminProctorPairs';
 import AdminScheduling from './pages/admin/AdminScheduling';
 import AdminDepartments from './pages/admin/AdminDepartments';
 import AdminClasses from './pages/admin/AdminClasses';
 import AdminConstraints from './pages/admin/AdminConstraints';
 import AdminUsers from './pages/admin/AdminUsers';
-import AdminExamSchedulePage from './pages/admin/AdminExamSchedulePage';
-import AdminProctoringSchedulePage from './pages/admin/AdminProctoringSchedulePage';
-import UserExamSchedulePage from './pages/user/UserExamSchedulePage';
-import UserProctoringSchedulePage from './pages/user/UserProctoringSchedulePage';
 
 // Route Protection Components
 import ProtectedRoute from './components/ProtectedRoute';
